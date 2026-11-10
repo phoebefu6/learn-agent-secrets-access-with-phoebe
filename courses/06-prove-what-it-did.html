@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- social:start -->
+<meta name="description" content="Session 6 of 6. Attributable audit records for an agent (agent id, human principal, token id, tool, argument hash, approver), revocation and the kill switch, the full blast-radius ladder from one shared admin key to the finished design, and Halyard's agent access plan on one page a security reviewer can sign.">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Learn with Phoebe">
+<meta property="og:title" content="Prove what it did, then sign the plan - learn secrets and access for AI agents with phoebe">
+<meta property="og:description" content="Session 6 of 6. Audit records that name the agent and the person, a kill switch that works in seconds, and the whole ladder computed.">
+<meta property="og:url" content="https://phoebefu6.github.io/learn-agent-secrets-access-with-phoebe/courses/06-prove-what-it-did.html">
+<meta property="og:image" content="https://phoebefu6.github.io/learn-agent-secrets-access-with-phoebe/assets/og-cover.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Prove what it did, then sign the plan - learn secrets and access for AI agents with phoebe">
+<meta name="twitter:description" content="Session 6 of 6. Audit records, the kill switch, and the whole blast-radius ladder computed.">
+<meta name="twitter:image" content="https://phoebefu6.github.io/learn-agent-secrets-access-with-phoebe/assets/og-cover.png">
+<!-- social:end -->
+<title>Session 6 · Prove what it did, then sign the plan - learn secrets and access for AI agents with phoebe</title>
+<link rel="stylesheet" href="../assets/style.css?v=2">
+</head>
+<body>
+
+<div class="toolbar">
+  <div class="wrap">
+    <span class="crumb"><a href="../index.html">learn-agent-secrets-access-with-phoebe</a> / Session 6 of 6</span>
+    <button class="btn" id="toggle-all" type="button">Expand all</button>
+    <button class="btn primary" id="zoom-toggle" type="button">Projector zoom: off</button>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="wrap">
+    <div class="eyebrow">Learn Secrets &amp; Access for AI Agents with Phoebe · Session 6 of 6</div>
+    <h1>Prove what it did, then <span class="accent">sign the plan</span></h1>
+    <p class="sub">Five sessions shrank what a poisoned ticket can reach. Two questions are left, and a security reviewer will ask both: when something does go wrong, can you say which agent did it, for whom, with which token and who approved it; and can you stop it in seconds? Tonight we design the audit record and the kill switch, run the whole bench ladder from the day-one shared key to the finished design, break it twice on purpose, and assemble Halyard's agent access plan on one page that someone can sign.</p>
+    <div class="chip-row">
+      <span class="chip level">🔴 Capstone</span>
+      <span class="chip audience">Builders and platform engineers</span>
+      <span class="chip audience">The full bench ladder, one signed plan</span>
+      <span class="chip time">45 min</span>
+    </div>
+    <div class="agenda">
+      <span class="a1" style="flex:1">0-3 · Welcome</span>
+      <span class="a2" style="flex:4">3-18 · Audit record, kill switch, the ladder</span>
+      <span class="a3" style="flex:5">18-40 · Build-along: sign Halyard's plan</span>
+      <span class="a4" style="flex:1">40-45 · Q&amp;A</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section class="section" id="intro">
+    <div class="section-kicker">
+      <span class="klabel">Part 0</span>
+      <h2>Where we start</h2>
+    </div>
+    <p class="lede">Constructed Halyard example. The ops agent now has its own identity, one credential per tool cut to the job, a broker that keeps every key out of the context window, approval gates on the three irreversible actions it can still reach, and refunds that run with the requesting rep's delegated token. The access plan has five pages: credential inventory, identity map, scope table, broker design and gate rules. Tonight adds the sixth, the audit spec, and the signature block.</p>
+
+    <div class="legend">
+      <span class="pill">🎫 Clear all three quiz questions to stamp your passport</span>
+      <span class="pill">Live = presented in the 45 minutes</span>
+      <span class="pill">Self-study = the full depth, after class</span>
+      <span class="pill">★ Build-along = do it yourself</span>
+    </div>
+
+    <div class="callout win">
+      <p><strong>★ What you walk out with tonight.</strong> An audit record specification with six fields and where each one comes from; a three-speed revocation plan that ends in a kill switch; the full blast-radius ladder for Halyard, computed in your browser, with the two ways the finished design still breaks; and the signed one-page agent access plan.</p>
+    </div>
+  </section>
+
+  <section class="section" id="part-1">
+    <div class="section-kicker">
+      <span class="klabel">Part 1 · covers attributable audit records</span>
+      <h2>An audit record that names the agent and the person</h2>
+      <span class="tag concept">5 min live</span>
+    </div>
+    <p class="lede">On day one, every log line said <code>HALYARD_ADMIN_KEY</code> did it. A record a reviewer can use answers six questions, and the design work is making sure each answer comes from a system that already knows it, not from the agent's own account of what it did.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 340" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="One audit record in the middle with six fields: agent id, human principal, token id, tool, argument hash and approver. Each field has an arrow from the system that supplies it: the workload identity supplies the agent id; the delegated token's act and subject claims supply the human principal; the broker supplies the token id; the MCP server supplies the tool name and hashes the arguments; the approval gate supplies the approver. A struck-through box on the right, the model's own summary, has no arrow into the record.">
+        <defs>
+          <filter id="k6aSk" x="-3%" y="-3%" width="106%" height="106%"><feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="2" seed="61" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="2.4" xChannelSelector="R" yChannelSelector="G"/></filter>
+          <pattern id="k6aHc" patternUnits="userSpaceOnUse" width="7" height="7" patternTransform="rotate(-38)"><line x1="0" y1="0" x2="0" y2="7" stroke="#B3832A" stroke-width="1" opacity=".55"/></pattern>
+          <marker id="k6aAr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M1 1 L9 5 L1 9" fill="none" stroke="#22141A" stroke-width="1.6" stroke-linecap="round"/></marker>
+        </defs>
+        <style>
+          .k6aH { font: 800 12px Inter, sans-serif; fill: #22141A; }
+          .k6aL { font: 600 12px Inter, sans-serif; fill: #22141A; }
+          .k6aS { font: 400 11px Inter, sans-serif; fill: #5E4A53; }
+          .k6aM { font: 600 11px ui-monospace, Menlo, monospace; fill: #2C0E1B; }
+          .k6aR { font: 800 11px Inter, sans-serif; fill: #991B1B; }
+          .k6aA { font: 700 11px Inter, sans-serif; fill: #5A400F; }
+          .k6aN { font: 400 12px Inter, sans-serif; fill: #5E4A53; }
+        </style>
+
+        <text class="k6aH" x="30" y="24">SIX FIELDS, SIX SOURCES, AND NONE OF THEM IS THE MODEL'S OWN WORD</text>
+
+        <g filter="url(#k6aSk)" fill="none" stroke="#22141A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="30" y="50" width="200" height="42" rx="8" fill="#FFFFFF"/>
+          <rect x="30" y="102" width="200" height="42" rx="8" fill="#FFFFFF"/>
+          <rect x="30" y="154" width="200" height="42" rx="8" fill="#FFFFFF"/>
+          <rect x="30" y="206" width="200" height="42" rx="8" fill="#FFFFFF"/>
+          <rect x="30" y="258" width="200" height="42" rx="8" fill="#FFFFFF"/>
+          <path d="M234 71 C260 71 262 88 288 90" marker-end="url(#k6aAr)"/>
+          <path d="M234 123 C260 123 262 122 288 122" marker-end="url(#k6aAr)"/>
+          <path d="M234 175 C260 175 262 154 288 154" marker-end="url(#k6aAr)"/>
+          <path d="M234 227 C260 227 262 190 288 188" marker-end="url(#k6aAr)"/>
+          <path d="M234 227 C260 227 262 222 288 222" marker-end="url(#k6aAr)"/>
+          <path d="M234 279 C260 279 262 258 288 256" marker-end="url(#k6aAr)"/>
+          <rect x="294" y="66" width="300" height="214" rx="12" transform="rotate(-0.4 444 173)" fill="url(#k6aHc)" stroke="#5A400F"/>
+          <rect x="660" y="140" width="190" height="64" rx="10" transform="rotate(0.8 755 172)" fill="#FFFFFF" stroke="#991B1B" stroke-dasharray="6 5"/>
+          <path data-strike="1" d="M670 172 L840 172" stroke="#991B1B" stroke-width="2.4"/>
+        </g>
+
+        <rect x="306" y="76" width="276" height="194" rx="8" fill="#FFFFFF"/>
+        <text class="k6aL" x="42" y="76">workload identity</text>
+        <text class="k6aL" x="42" y="128">delegated token claims</text>
+        <text class="k6aL" x="42" y="180">credential broker</text>
+        <text class="k6aL" x="42" y="232">MCP server</text>
+        <text class="k6aL" x="42" y="284">approval gate</text>
+        <text class="k6aA" x="318" y="96">ONE AUDIT RECORD</text>
+        <text class="k6aM" x="318" y="122">agent_id   halyard-ops-agent</text>
+        <text class="k6aM" x="318" y="156">principal  dana (sub), agent (act)</text>
+        <text class="k6aM" x="318" y="190">token_id   jti 7c1e...</text>
+        <text class="k6aM" x="318" y="214">tool       refunds.create</text>
+        <text class="k6aM" x="318" y="232">args_hash  sha256 4be0...</text>
+        <text class="k6aM" x="318" y="258">approver   dana, 14:02:11</text>
+        <text class="k6aR" x="755" y="160" text-anchor="middle">the model's own summary</text>
+        <text class="k6aS" x="755" y="192" text-anchor="middle">never a source of record</text>
+        <text class="k6aN" x="30" y="326">Constructed Halyard example. If a field can only be filled by asking the agent what it did, the record proves nothing.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - every field is written by the system that enforced it: identity, token, broker, server, gate</figcaption>
+    </figure>
+
+    <details class="card" open>
+      <summary><span class="mode live">Live</span>The six fields, and where each one comes from<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p><strong>Agent id</strong> from the workload identity the agent authenticated with (session 2), not a name in its prompt. <strong>Human principal</strong> from the delegated token: RFC 8693 puts the person in the subject and the agent in the <code>act</code> claim, and nested <code>act</code> claims record the chain when one agent calls another. For batch work with no person, the field says so explicitly. <strong>Token id</strong> from the broker that minted or attached the short-lived token (session 4), so one record can be tied to one lease and one revocation.</p>
+        <p><strong>Tool</strong> and <strong>argument hash</strong> from the MCP server that executed the call. Hash the arguments rather than storing them: the record proves exactly what was sent without copying a customer's address or a refund note into a log that more people can read. Keep the clear arguments, if you must, in a store with its own access rule. <strong>Approver</strong> from the gate (session 5), with the time, or "not gated".</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>Why passthrough breaks the record<span class="mini">2 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>The MCP security best practices (revision 2026-07-28, read at source) forbid token passthrough, where an MCP server accepts a token that was not issued to it and forwards it downstream, and list the risks. One of them is accountability and audit trail issues: the downstream system sees the client's token and cannot tell that the MCP server, or the agent behind it, made the call. A record that has to name the agent needs every hop to present its own token for its own audience, which is what session 4 built.</p>
+        <p>OWASP's LLM06 Excessive Agency entry is blunt about the limits of what this buys: logging, monitoring and rate limiting limit the damage, they do not prevent it. The audit record is how you find out and how you prove; the scopes, broker and gates are what stopped it happening.</p>
+      </div>
+    </details>
+
+    <div class="callout example">
+      <span class="ex-pill">Real world</span>
+      <p><strong>The standards bodies are writing this field down.</strong> The IETF individual draft "OAuth 2.0 Extension: On-Behalf-Of User Authorization for AI Agents" (draft -02, 2025-08-25, now expired) names auditability as a goal, carried by token claims that record the user, the client and the agent. A later draft, "AI Agent Authentication and Authorization" (draft-klrc-aiagent-auth-03, 2026-07-06), was adopted by the IETF WIMSE working group. Both are drafts, not standards; the claim structure they lean on, RFC 8693's <code>act</code>, is a published standard you can use today.</p>
+    </div>
+  </section>
+
+  <section class="section" id="part-2">
+    <div class="section-kicker">
+      <span class="klabel">Part 2 · covers revocation and the kill switch</span>
+      <h2>Three speeds of stop</h2>
+      <span class="tag concept">5 min live</span>
+    </div>
+    <p class="lede">Day one, stopping the agent meant revoking the shared key and breaking six systems, so nobody would. With one identity, per-tool keys and short leases there are three levers, each faster and blunter than the last. Write down in advance who may pull each one.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Three levers from narrow to wide. One: revoke one lease, which stops one tool's current token, for example the refunds token. Two: revoke by prefix, which stops every lease the agent holds across all tools. Three: the kill switch, which disables the agent's identity at the broker so no new token is issued and every tool fails closed. Below, a reach bar shows one tool, then all of the agent's tools, then the agent itself, and the deploy scripts are untouched by all three.">
+        <defs>
+          <filter id="k6bSk" x="-3%" y="-3%" width="106%" height="106%"><feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="2" seed="67" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="2.4" xChannelSelector="R" yChannelSelector="G"/></filter>
+        </defs>
+        <style>
+          .k6bH { font: 800 12px Inter, sans-serif; fill: #22141A; }
+          .k6bL { font: 700 12px Inter, sans-serif; fill: #22141A; }
+          .k6bS { font: 400 11px Inter, sans-serif; fill: #5E4A53; }
+          .k6bM { font: 600 11px ui-monospace, Menlo, monospace; fill: #2C0E1B; }
+          .k6bW { font: 800 13px Inter, sans-serif; fill: #FFFFFF; }
+          .k6bA { font: 700 11px Inter, sans-serif; fill: #5A400F; }
+          .k6bN { font: 400 12px Inter, sans-serif; fill: #5E4A53; }
+        </style>
+
+        <text class="k6bH" x="30" y="24">NARROW TO WIDE: WHAT EACH LEVER STOPS, AND WHAT IT LEAVES RUNNING</text>
+
+        <g filter="url(#k6bSk)" fill="none" stroke="#22141A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="30" y="44" width="260" height="140" rx="12" transform="rotate(-0.5 160 114)" fill="#FFFFFF"/>
+          <rect x="310" y="44" width="260" height="140" rx="12" transform="rotate(0.4 440 114)" fill="#FFFFFF"/>
+          <rect x="590" y="44" width="260" height="140" rx="12" transform="rotate(-0.4 720 114)" fill="#FEF2F2" stroke="#991B1B"/>
+          <path d="M30 230 L850 230" stroke="#D8C7CE"/>
+          <path d="M60 230 L150 230" stroke="#B3832A" stroke-width="8"/>
+          <path d="M340 230 L540 230" stroke="#B3832A" stroke-width="8"/>
+          <path d="M620 230 L820 230" stroke="#991B1B" stroke-width="8"/>
+        </g>
+
+        <circle cx="54" cy="68" r="13" fill="#43192A"/><text class="k6bW" x="54" y="73" text-anchor="middle">1</text>
+        <circle cx="334" cy="68" r="13" fill="#43192A"/><text class="k6bW" x="334" y="73" text-anchor="middle">2</text>
+        <circle cx="614" cy="68" r="13" fill="#991B1B"/><text class="k6bW" x="614" y="73" text-anchor="middle">3</text>
+        <text class="k6bL" x="76" y="73">revoke one lease</text>
+        <text class="k6bM" x="48" y="104">vault lease revoke &lt;id&gt;</text>
+        <text class="k6bS" x="48" y="128">stops one tool's live token</text>
+        <text class="k6bS" x="48" y="146">the next call gets a new one</text>
+        <text class="k6bA" x="48" y="170">use: one tool misbehaving</text>
+        <text class="k6bL" x="356" y="73">revoke by prefix</text>
+        <text class="k6bM" x="328" y="104">vault lease revoke -prefix</text>
+        <text class="k6bS" x="328" y="128">stops every lease under it</text>
+        <text class="k6bS" x="328" y="146">all of the agent's tools at once</text>
+        <text class="k6bA" x="328" y="170">use: a key may have leaked</text>
+        <text class="k6bL" x="636" y="73">kill switch</text>
+        <text class="k6bM" x="608" y="104">broker: agent disabled</text>
+        <text class="k6bS" x="608" y="128">no new token is issued</text>
+        <text class="k6bS" x="608" y="146">every tool fails closed</text>
+        <text class="k6bA" x="608" y="170">use: the agent is acting wrong</text>
+        <text class="k6bS" x="60" y="254">one tool</text>
+        <text class="k6bS" x="340" y="254">every tool of the agent</text>
+        <text class="k6bS" x="620" y="254">the agent itself</text>
+        <text class="k6bN" x="30" y="286">None of the three touches the deploy or billing scripts: that is what one identity per agent bought.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - with separate identities, the widest stop still only stops the agent</figcaption>
+    </figure>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>Leases make revocation a command, not a project<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>HashiCorp Vault's documentation (read 2026-11-10) describes the mechanism the first two levers rely on. Every dynamic secret has a lease with an id and a time to live; revocation invalidates it immediately; revoking a token revokes every lease created with it; and <code>vault lease revoke -prefix</code> revokes a whole group, the example being everything under <code>aws/</code>. The database engine creates a unique username and password on each request, so a compromise means revoking one application's credentials, not rotating a shared one.</p>
+        <p>Short leases are also the lever you do not have to pull. Vault's database tutorial uses a default time to live of one hour and a maximum of 24 hours as its example; a token that leaked at 14:00 is useless by the time anyone reads the log. Pick your own numbers; the point is that they exist.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>The kill switch, and the offboarding it leads to<span class="mini">2 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>The kill switch lives at the broker because the broker is the only place every tool's token comes from. Disable the agent's identity there and nothing new is minted; with leases measured in minutes, the agent is out of every system within one lease. It must fail closed: a tool that cannot get a token refuses the call and says why, it does not fall back to a cached key.</p>
+        <p>Retiring the agent for good is the same switch plus cleanup, and the step teams forget. OWASP's NHI1:2025 Improper Offboarding is exactly that: non-human identities left active after their job ends. Put the retirement steps in the plan now, while someone remembers what the agent holds.</p>
+      </div>
+    </details>
+  </section>
+
+  <section class="section" id="part-3">
+    <div class="section-kicker">
+      <span class="klabel">Part 3 · covers the full blast-radius ladder</span>
+      <h2>The whole ladder, computed</h2>
+      <span class="tag concept">5 min live</span>
+    </div>
+    <p class="lede">Every rung from sessions 1 to 5, run through the same graph search. The table below is computed by the engine as the page loads; the drawing beside it uses the same numbers. Read it for the shape: which rung moved the headline, which moved something else, and which did nothing to the count but still earned its place.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A descending staircase of six rungs. Rung 0, one shared admin key: 19 sensitive actions, weighted 121. Rung 1, one credential per tool: 15, weighted 90. Rung 2, scopes cut: 6, weighted 26. Rung 3, broker: still 6, weighted 26, but a stolen key now reaches 0 instead of 5. Rung 4, gates on irreversible actions: 3, weighted 11, and the lethal trifecta is broken. Rung 5, on-behalf-of for rep requests: 2, weighted 8.">
+        <defs>
+          <filter id="k6cSk" x="-3%" y="-3%" width="106%" height="106%"><feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="2" seed="71" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="2.4" xChannelSelector="R" yChannelSelector="G"/></filter>
+          <pattern id="k6cHc" patternUnits="userSpaceOnUse" width="7" height="7" patternTransform="rotate(-38)"><line x1="0" y1="0" x2="0" y2="7" stroke="#B3832A" stroke-width="1" opacity=".6"/></pattern>
+        </defs>
+        <style>
+          .k6cH { font: 800 12px Inter, sans-serif; fill: #22141A; }
+          .k6cL { font: 700 11px Inter, sans-serif; fill: #22141A; }
+          .k6cS { font: 400 11px Inter, sans-serif; fill: #5E4A53; }
+          .k6cV { font: 800 18px Inter, sans-serif; fill: #991B1B; }
+          .k6cG { font: 800 18px Inter, sans-serif; fill: #2C0E1B; }
+          .k6cA { font: 700 11px Inter, sans-serif; fill: #5A400F; }
+          .k6cN { font: 400 12px Inter, sans-serif; fill: #5E4A53; }
+        </style>
+
+        <text class="k6cH" x="30" y="24">SENSITIVE ACTIONS A POISONED INPUT REACHES WITH NO HUMAN IN THE WAY</text>
+
+        <g filter="url(#k6cSk)" fill="none" stroke="#22141A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="40" y="52" width="124" height="196" rx="6" fill="#FEF2F2" stroke="#991B1B"/>
+          <rect x="178" y="93" width="124" height="155" rx="6" fill="#FEF2F2" stroke="#991B1B"/>
+          <rect x="316" y="186" width="124" height="62" rx="6" fill="#FEF2F2" stroke="#991B1B"/>
+          <rect x="454" y="186" width="124" height="62" rx="6" fill="url(#k6cHc)" stroke="#5A400F"/>
+          <rect x="592" y="217" width="124" height="31" rx="6" fill="#F8EEF2" stroke="#43192A"/>
+          <rect x="730" y="227" width="124" height="21" rx="6" fill="#F8EEF2" stroke="#43192A"/>
+          <path d="M30 248 L864 248"/>
+        </g>
+
+        <text class="k6cV" x="102" y="44" text-anchor="middle">19</text>
+        <text class="k6cV" x="240" y="85" text-anchor="middle">15</text>
+        <text class="k6cV" x="378" y="178" text-anchor="middle">6</text>
+        <text class="k6cV" x="516" y="178" text-anchor="middle">6</text>
+        <text class="k6cG" x="654" y="209" text-anchor="middle">3</text>
+        <text class="k6cG" x="792" y="219" text-anchor="middle">2</text>
+        <text class="k6cL" x="102" y="268" text-anchor="middle">0 shared key</text>
+        <text class="k6cL" x="240" y="268" text-anchor="middle">1 key per tool</text>
+        <text class="k6cL" x="378" y="268" text-anchor="middle">2 scopes cut</text>
+        <text class="k6cL" x="516" y="268" text-anchor="middle">3 broker</text>
+        <text class="k6cL" x="654" y="268" text-anchor="middle">4 gates</text>
+        <text class="k6cL" x="792" y="268" text-anchor="middle">5 on-behalf-of</text>
+        <text class="k6cS" x="102" y="284" text-anchor="middle">weighted 121</text>
+        <text class="k6cS" x="240" y="284" text-anchor="middle">weighted 90</text>
+        <text class="k6cS" x="378" y="284" text-anchor="middle">weighted 26</text>
+        <text class="k6cS" x="516" y="284" text-anchor="middle">stolen key 5 to 0</text>
+        <text class="k6cS" x="654" y="284" text-anchor="middle">trifecta broken</text>
+        <text class="k6cS" x="792" y="284" text-anchor="middle">weighted 8</text>
+        <text class="k6cA" x="516" y="140" text-anchor="middle">same count,</text>
+        <text class="k6cA" x="516" y="156" text-anchor="middle">nothing leaves</text>
+        <text class="k6cN" x="30" y="312">Constructed Halyard weights. Rung 3 is the one a count-only review would cut, and the one an incident would miss most.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - scopes did most of the work, gates broke the trifecta, and the broker changed what a leak is worth rather than what the agent can do</figcaption>
+    </figure>
+
+    <div class="asa-ladder"></div>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>Reading the ladder honestly<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p><strong>Scopes did most of it.</strong> Going from one broad key per tool to the scopes each job needs took the headline from 15 to 6 and the weighted radius from 90 to 26. That is the cheapest rung: no new infrastructure, only a list of scopes per tool.</p>
+        <p><strong>The broker did not move the count, and it is not optional.</strong> With keys behind a broker the headline stays at 6, because the agent can still do everything its scopes allow. What changes is the stolen-key column, from 5 to 0, and keys readable in the context, from 4 to 0. A review that only reads the headline would cut this rung; an incident is exactly when it matters.</p>
+        <p><strong>Gates broke the trifecta.</strong> Gating the three irreversible actions still reachable (send email, refund, fetch) took the headline to 3 and left no ungated way out, so private data can be read but not sent anywhere. <strong>On-behalf-of</strong> removed the last payments read from the agent's own identity: 2 left, both reads.</p>
+      </div>
+    </details>
+
+    <div class="callout tip">
+      <p><strong>Two is not zero, and should not be.</strong> The agent's job is to read the support inbox and the team channel. A design that reached zero would be an agent that cannot do its work. The finished number is the residual risk you accept and write down, with the gates and the audit record as the controls around it.</p>
+    </div>
+  </section>
+
+  <section class="section" id="demo-6">
+    <div class="section-kicker">
+      <span class="klabel">Build-along</span>
+      <h2>Break the finished design, then sign the plan</h2>
+      <span class="tag demo">★ 22 min · everyone builds</span>
+    </div>
+    <p class="lede">The bench starts on rung 5, the finished design. Before anyone signs, break it twice the way real systems drift, read what the search prints, and write the two lines into the plan that would have caught each. Then assemble the six pages into one.</p>
+
+    <div class="asa-bench" data-preset="r5" data-title="Halyard blast-radius bench: the finished design"></div>
+
+    <div class="steps">
+      <div class="step">
+        <p><strong>Confirm the finished numbers.</strong> On rung 5 the bench prints <strong>2 of 19 sensitive actions</strong> reachable with no human in the way, <strong>weighted 8</strong>, a stolen key reaching 0, no keys readable in the context, 2 approvals and the trifecta broken. The shortest path left is ticket body, ops agent, tickets tool, read the support inbox.</p>
+      </div>
+      <div class="step">
+        <p><strong>Break 1: tick "Rep requests also read the ticket text".</strong> A rep asks the agent in chat to sort out ticket 4471, and the agent opens the ticket in the same run. The headline goes to <strong>3</strong>, weighted <strong>11</strong>: read charges is back, now under the rep's delegated authority. On-behalf-of caps reach at what the rep may do; it does not stop injection from riding along.</p>
+        <div class="prompt-box good"><span class="label">★ Step 2 · plan line that catches it</span>Rep requests name an order id. The agent does not load ticket
+text into a run that carries a rep's delegated token. Where it
+must, the run drops to the agent's own identity first.</div>
+      </div>
+      <div class="step">
+        <p><strong>Break 2: untick it, tick "The warehouse tool keeps its admin role".</strong> Someone restored the old role "to fix a dashboard". The headline goes to <strong>3</strong>, weighted <strong>15</strong>: the customer contact table is reachable from a poisoned ticket, and the gates now ask for 4 approvals instead of 2. Nothing in the agent changed; one role did.</p>
+        <div class="prompt-box good"><span class="label">★ Step 3 · plan line that catches it</span>Each tool's scopes are pinned in the scope table. A change to
+any tool credential re-runs the blast-radius check and needs
+the plan owner's approval. Weekly diff: live scopes vs table.</div>
+      </div>
+      <div class="step">
+        <p><strong>Write the audit spec, page 6.</strong> The six fields from Part 1, with the system that writes each, plus retention and who may read it.</p>
+        <div class="prompt-box good"><span class="label">★ Step 4 · audit spec</span>field       written by          note
+agent_id    workload identity   halyard-ops-agent
+principal   delegated token     sub = rep, act = agent; "none"
+                                for queue work
+token_id    broker              jti of the short-lived token
+tool        MCP server          server and tool name
+args_hash   MCP server          sha256 of canonical arguments
+approver    approval gate       person + time, or "not gated"
+Retention 400 days. Readers: security, plan owner.
+Never logged: tokens, keys, Authorization headers.</div>
+      </div>
+      <div class="step">
+        <p><strong>Assemble the one-page plan and sign it.</strong> One line per page from sessions 1 to 6, the residual risk in numbers the bench printed, the stop levers and their owners, and the signature block.</p>
+        <div class="prompt-box good"><span class="label">★ Step 5 · Halyard agent access plan (constructed)</span>Agent       halyard-ops-agent, owner: platform team lead
+1 Inventory one key per tool, none shared with other automation
+2 Identity  own identity for queue work; refunds on behalf of
+            the requesting rep (token exchange, act = agent)
+3 Scopes    tickets gmail.readonly + gmail.send; chat
+            channels:history + chat:write; warehouse aggregates
+            only; refunds charges:read + capped refund
+4 Broker    keys attached at call time, audience-bound,
+            short-lived; traces redacted; no passthrough
+5 Gates     send email, refund, fetch outside the carrier
+            allowlist: a person approves
+6 Audit     six fields as specified, 400 days
+Residual    2 of 19 sensitive actions reachable ungated,
+            weighted 8 (bench rung 5): read inbox, read channels
+Stop        lease revoke: on-call; prefix revoke: security;
+            kill switch: security or the plan owner
+Signed      ____________ security reviewer   date ________</div>
+      </div>
+    </div>
+
+    <div class="callout tip">
+      <p><strong>Hand the signed plan to the people who will try to break it.</strong> The plan is a design; whether injection and tool abuse actually succeed against it is a test. <a href="https://phoebefu6.github.io/learn-ai-red-team-with-phoebe/courses/b6-tool-abuse-and-agency.html">learn-ai-red-team, tool abuse and agency</a> runs that test, and <a href="https://phoebefu6.github.io/learn-agent-launch-with-phoebe/courses/b8-agent-trajectory-evals.html">learn-agent-launch, trajectory evals</a> checks the gated agent still does its job. For mapping the plan to a governance framework, see <a href="https://phoebefu6.github.io/learn-ai-governance-with-phoebe/courses/b5-nist-rmf.html">learn-ai-governance, NIST AI RMF</a>.</p>
+    </div>
+  </section>
+
+  <section class="section" id="exercise">
+    <div class="section-kicker">
+      <span class="klabel">Homework</span>
+      <h2>After the last session</h2>
+      <span class="tag exercise">45 min</span>
+    </div>
+    <ol>
+      <li><strong>Write your own one-page plan.</strong> Same nine lines, for your agent, with your own residual-risk count. If you cannot fill a line, that line is your next piece of work.</li>
+      <li><strong>Pull one audit record.</strong> Find a real tool call your agent made last week and try to fill the six fields from your systems alone. Note every field you had to guess.</li>
+      <li><strong>Time the kill switch.</strong> In a test environment, disable the agent's identity and measure how long until every tool refuses. If the answer is "until the key is rotated", you do not have a kill switch yet.</li>
+      <li><strong>Book the red team.</strong> Send them the plan, not the prompt, and ask them to break the residual list first.</li>
+    </ol>
+  </section>
+
+  <section class="section" id="quiz">
+    <div class="section-kicker">
+      <span class="klabel">Check yourself</span>
+      <h2>Three questions</h2>
+    </div>
+    <p>Clear all three and session 6 gets stamped in your passport.</p>
+
+    <div class="quiz-q" data-answer="3">
+      <p class="qtext">1 · Which source should fill the "human principal" field of an audit record for a refund the agent made at a rep's request?</p>
+      <button class="qopt" type="button">A · The agent's own summary of the conversation</button>
+      <button class="qopt" type="button">B · The name the rep typed in the chat message</button>
+      <button class="qopt" type="button">C · The shared admin key's owner</button>
+      <button class="qopt" type="button">D · The delegated token's claims: the rep as subject, the agent in the act claim</button>
+      <p class="qwhy">The token was issued by the authorization server to that rep and that agent, so it is the one source the agent cannot talk its way into. A and B are text the model or a user wrote; C names nobody in particular.</p>
+    </div>
+
+    <div class="quiz-q" data-answer="1">
+      <p class="qtext">2 · On the ladder, putting Halyard's keys behind a broker (rung 3) leaves the headline at 6. Why keep the rung?</p>
+      <button class="qopt" type="button">A · Because the weighted blast radius falls even though the count does not</button>
+      <button class="qopt" type="button">B · Because a stolen key now reaches 0 sensitive actions instead of 5, and no key is readable in the context</button>
+      <button class="qopt" type="button">C · Because brokers also add approval gates</button>
+      <button class="qopt" type="button">D · It should be dropped; the count is what reviewers sign</button>
+      <p class="qwhy">The weighted radius stays at 26 too, so A is wrong. The broker changes what a leak is worth: nothing in the context can leave with a request and be used directly. Gates are a separate rung.</p>
+    </div>
+
+    <div class="quiz-q" data-answer="2">
+      <p class="qtext">3 · On the finished design, the warehouse tool quietly gets its admin role back. What does the bench report?</p>
+      <button class="qopt" type="button">A · Nothing changes, because the gates catch every warehouse action</button>
+      <button class="qopt" type="button">B · The trifecta comes back, because export is a way out</button>
+      <button class="qopt" type="button">C · The headline goes from 2 to 3, weighted 15: the customer contact table is reachable, and the gates ask for 4 approvals instead of 2</button>
+      <button class="qopt" type="button">D · The headline goes to 19, back to day one</button>
+      <p class="qwhy">Export and drop are irreversible, so they are gated and the trifecta stays broken; but reading the customer table is not irreversible, so no gate stops it. One role change undid one rung, which is why the plan pins scopes and re-runs the check on any change.</p>
+    </div>
+
+    <p class="quiz-score"></p>
+  </section>
+
+  <section class="section" id="official">
+    <div class="section-kicker">
+      <span class="klabel">Sources covered</span>
+      <h2>What this session teaches, and where it came from</h2>
+    </div>
+    <div class="covered">
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">RFC 8693 OAuth 2.0 Token Exchange (January 2020, read 2026-11-10)</span><span class="note">Subject and actor tokens, the act claim and nested delegation chains</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">MCP security best practices, revision 2026-07-28 (read 2026-11-10)</span><span class="note">Token passthrough forbidden; accountability and audit trail among the listed risks</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">HashiCorp Vault leases and database secrets tutorial (read 2026-11-10)</span><span class="note">Lease ids, TTL, immediate and prefix revocation, unique credentials per request, 1h and 24h example TTLs</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">OWASP LLM06:2025 Excessive Agency; OWASP NHI1:2025 Improper Offboarding</span><span class="note">Logging limits damage but does not prevent it; identities left active after their job</span></div>
+      <div class="covered-row"><span class="status pill light">◐</span><span class="name">IETF drafts on agent authorization</span><span class="note">draft-oauth-ai-agents-on-behalf-of-user-02 (expired) and draft-klrc-aiagent-auth-03 (adopted by WIMSE); drafts, not standards</span></div>
+      <div class="covered-row"><span class="status pill light">◐</span><span class="name">The ladder and both breaks (19 to 2; 3 and 11; 3 and 15)</span><span class="note">Computed by the graph search in your browser on a constructed graph; a Python reference reproduces every value</span></div>
+      <div class="covered-row"><span class="status pill light">◐</span><span class="name">Halyard, Dana, the audit spec and the signed plan</span><span class="note">Constructed for teaching; the six-field record is a design, not a published standard</span></div>
+    </div>
+    <p class="mono" style="margin-top:14px">Every fact on this page, and its verification tier, is recorded in the course's source map.</p>
+  </section>
+
+  <section class="cheat" id="cheatsheet">
+    <h3>Session 6 cheat sheet <span>· pin this</span></h3>
+    <div class="grid-2">
+      <div class="cheat-item"><b>Six fields</b><span>Agent id, human principal, token id, tool, argument hash, approver.</span></div>
+      <div class="cheat-item"><b>Six sources</b><span>Identity, token claims, broker, MCP server, gate. Never the model's own summary.</span></div>
+      <div class="cheat-item"><b>Three speeds of stop</b><span>Revoke a lease, revoke by prefix, kill switch at the broker. Fail closed.</span></div>
+      <div class="cheat-item"><b>The ladder</b><span>19 / 121 day one, 6 / 26 after scopes, 3 / 11 after gates, 2 / 8 finished.</span></div>
+      <div class="cheat-item"><b>The broker rung</b><span>Count unchanged, stolen key 5 to 0. Keep it.</span></div>
+      <div class="cheat-item"><b>Sign residual risk</b><span>Two reads are left on purpose. Write them down and test them.</span></div>
+    </div>
+  </section>
+
+  <div class="callout next">
+    <span class="nx-pill">You finished the path</span>
+    <p>Halyard's agent now holds less, asks first, and leaves a record. Take the signed plan to the red team, run trajectory evals on the gated agent, and come back to session 1's inventory every time someone adds a tool.</p>
+  </div>
+
+  <footer class="pagefoot">
+    <span>Session 6 of 6 · learn-agent-secrets-access-with-phoebe · by Phoebe Fu &nbsp;·&nbsp; 📚 <a href="https://phoebefu6.github.io/learn-with-phoebe/">Learn with Phoebe ↗</a></span>
+    <span><a href="05-when-the-agent-must-ask.html">← Prev: When the agent must ask first</a> &nbsp;·&nbsp; <a href="../index.html">Course home →</a></span>
+  </footer>
+
+</main>
+
+<script src="../assets/app.js?v=1"></script>
+<script src="../assets/asa-sample.js?v=1"></script>
+<script src="../assets/asa-live.js?v=3"></script>
+</body>
+</html>

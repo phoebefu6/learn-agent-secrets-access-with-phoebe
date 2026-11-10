@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- social:start -->
+<meta name="description" content="Session 4 of 6. Keep the key out of the context window: a broker that attaches credentials at call time, short-lived leased secrets, traces redacted before they are written, and MCP authorization with audience-bound tokens and no token passthrough. Then move Halyard's keys behind a broker on a bench that searches the graph in your browser.">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Learn with Phoebe">
+<meta property="og:title" content="Keep the key out of the context window - learn secrets and access for AI agents with phoebe">
+<meta property="og:description" content="Session 4 of 6. Brokers, short-lived secrets, redacted traces and MCP authorization, and why a stolen key falls to zero while the headline stays put.">
+<meta property="og:url" content="https://phoebefu6.github.io/learn-agent-secrets-access-with-phoebe/courses/04-keep-the-key-out.html">
+<meta property="og:image" content="https://phoebefu6.github.io/learn-agent-secrets-access-with-phoebe/assets/og-cover.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Keep the key out of the context window - learn secrets and access for AI agents with phoebe">
+<meta name="twitter:description" content="Session 4 of 6. Brokers, leases, redacted traces and MCP authorization, on a bench you can break.">
+<meta name="twitter:image" content="https://phoebefu6.github.io/learn-agent-secrets-access-with-phoebe/assets/og-cover.png">
+<!-- social:end -->
+<title>Session 4 · Keep the key out of the context window - learn secrets and access for AI agents with phoebe</title>
+<link rel="stylesheet" href="../assets/style.css?v=2">
+</head>
+<body>
+
+<div class="toolbar">
+  <div class="wrap">
+    <span class="crumb"><a href="../index.html">learn-agent-secrets-access-with-phoebe</a> / Session 4 of 6</span>
+    <button class="btn" id="toggle-all" type="button">Expand all</button>
+    <button class="btn primary" id="zoom-toggle" type="button">Projector zoom: off</button>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="wrap">
+    <div class="eyebrow">Learn Secrets &amp; Access for AI Agents with Phoebe · Session 4 of 6</div>
+    <h1>Keep the key out of the <span class="accent">context window</span></h1>
+    <p class="sub">After session 3 every Halyard tool holds a key cut to its job. Those keys still sit where the model can be talked into repeating them: in the environment of a process whose errors flow back into the context, in the traces, on the provider's side. Tonight we move them below the line the model reads. A broker attaches each key at call time, secrets are leased for an hour instead of held forever, traces are redacted before they are written, and the MCP server becomes an OAuth resource server that accepts only tokens issued to it.</p>
+    <div class="chip-row">
+      <span class="chip level">🟠 Deeper</span>
+      <span class="chip audience">Builders and platform engineers</span>
+      <span class="chip audience">Config and HTTP, read and edited</span>
+      <span class="chip time">45 min</span>
+    </div>
+    <div class="agenda">
+      <span class="a1" style="flex:1">0-3 · Welcome</span>
+      <span class="a2" style="flex:4">3-18 · Brokers, leases, MCP authorization</span>
+      <span class="a3" style="flex:5">18-40 · Build-along: the broker design</span>
+      <span class="a4" style="flex:1">40-45 · Q&amp;A</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section class="section" id="intro">
+    <div class="section-kicker">
+      <span class="klabel">Part 0</span>
+      <h2>Where we start</h2>
+    </div>
+    <p class="lede">The running case is still the constructed Halyard example: an invented logistics SaaS whose ops agent works five tools, tickets on a Gmail support inbox, warehouse, refunds, chat on Slack, and fetch. Session 3 left it on rung 2 of the bench: one credential per tool, each cut to its job. The bench prints <strong>6 of 19 sensitive actions</strong> still reachable from a poisoned ticket, a weighted blast radius of 26 (constructed weights), and two numbers we have not touched yet: a stolen key still reaches 5 actions directly, and 4 keys are readable in the context. Those last two are tonight's job.</p>
+
+    <div class="legend">
+      <span class="pill">🎫 Clear all three quiz questions to stamp your passport</span>
+      <span class="pill">Live = presented in the 45 minutes</span>
+      <span class="pill">Self-study = the full depth, after class</span>
+      <span class="pill">★ Build-along = do it yourself</span>
+    </div>
+
+    <div class="callout win">
+      <p><strong>★ What you walk out with tonight.</strong> A broker design for one agent: per tool, which identity it runs as, which scopes, which audience, how long a token lives, what gets redacted and the rule that no client token is ever passed through. Plus a trace redaction rule with a canary test that proves it works, and page 4 of Halyard's agent access plan, with the bench showing a stolen key falling from 5 to 0.</p>
+    </div>
+  </section>
+
+  <section class="section" id="part-1">
+    <div class="section-kicker">
+      <span class="klabel">Part 1 · covers credential brokers and proxies</span>
+      <h2>A broker attaches the key at call time</h2>
+      <span class="tag concept">5 min live</span>
+    </div>
+    <p class="lede">The model does not need the key. It needs the result of a call that used the key. A broker splits those two: the model emits a tool call with a tool name and arguments and nothing else, and the component that actually talks to the API looks up who is calling, fetches or mints a token, attaches it to the outbound request and strips it from what comes back. The context window becomes a boundary the key never crosses.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 388" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="The broker mechanism. At the top, a band labelled the context window holds two boxes: the model's tool call, refunds.issue with an order and an amount and no key, and the tool result that comes back, also with no key. An arrow carries the call down out of the context window to the broker inside the MCP server, which looks up the agent's identity, fetches or mints a short-lived token and attaches it. The broker draws the token from a secret store below it. An arrow runs right to the payments API, where the outbound request carries an Authorization bearer header with the key. The response goes right to a strip step that drops the Authorization and Set-Cookie headers and redacts key patterns, then up into the context as the tool result. A red panel at the bottom contrasts day one, when the key sat in the tool's environment and a 401 error echoed it into the context.">
+        <defs>
+          <filter id="k4aSk" x="-3%" y="-3%" width="106%" height="106%"><feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="2" seed="41" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="2.4" xChannelSelector="R" yChannelSelector="G"/></filter>
+          <pattern id="k4aHc" patternUnits="userSpaceOnUse" width="7" height="7" patternTransform="rotate(-38)"><line x1="0" y1="0" x2="0" y2="7" stroke="#B3832A" stroke-width="1" opacity=".5"/></pattern>
+          <marker id="k4aAr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M1 1 L9 5 L1 9" fill="none" stroke="#22141A" stroke-width="1.6" stroke-linecap="round"/></marker>
+        </defs>
+        <style>
+          .k4aH { font: 800 12px Inter, sans-serif; fill: #22141A; }
+          .k4aL { font: 600 12px Inter, sans-serif; fill: #22141A; }
+          .k4aS { font: 400 11px Inter, sans-serif; fill: #5E4A53; }
+          .k4aR { font: 800 11px Inter, sans-serif; fill: #991B1B; }
+          .k4aK { font: 700 11px Inter, sans-serif; fill: #5A400F; }
+          .k4aA { font: 700 11px Inter, sans-serif; fill: #2C0E1B; }
+          .k4aM { font: 600 11px ui-monospace, Menlo, monospace; fill: #22141A; }
+          .k4aN { font: 400 12px Inter, sans-serif; fill: #5E4A53; }
+        </style>
+
+        <text class="k4aH" x="30" y="24">A BROKER ATTACHES THE KEY AT CALL TIME, BELOW THE CONTEXT WINDOW (HALYARD, CONSTRUCTED)</text>
+
+        <g filter="url(#k4aSk)" fill="none" stroke="#22141A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="30" y="44" width="820" height="110" rx="14" transform="rotate(-0.2 440 99)" fill="#F8EEF2" stroke="#43192A"/>
+          <rect x="50" y="78" width="250" height="60" rx="8" transform="rotate(0.5 175 108)" fill="#FFFFFF"/>
+          <rect x="580" y="78" width="250" height="60" rx="8" transform="rotate(-0.5 705 108)" fill="#FFFFFF"/>
+          <path d="M175 142 L175 196" marker-end="url(#k4aAr)"/>
+          <rect x="50" y="200" width="250" height="86" rx="10" transform="rotate(-0.4 175 243)" fill="url(#k4aHc)" stroke="#B3832A"/>
+          <path d="M304 243 L376 243" marker-end="url(#k4aAr)"/>
+          <rect x="380" y="200" width="200" height="86" rx="10" transform="rotate(0.4 480 243)" fill="#FFFFFF"/>
+          <path d="M584 243 L636 243" marker-end="url(#k4aAr)"/>
+          <rect x="640" y="200" width="210" height="86" rx="10" transform="rotate(-0.4 745 243)" fill="#FBF3E1" stroke="#B3832A"/>
+          <path d="M745 196 L745 142" marker-end="url(#k4aAr)"/>
+          <path d="M175 310 L175 292" marker-end="url(#k4aAr)"/>
+          <rect x="50" y="312" width="250" height="40" rx="8" transform="rotate(0.4 175 332)" fill="#FFFFFF"/>
+          <rect x="380" y="312" width="470" height="40" rx="8" transform="rotate(-0.2 615 332)" fill="#FEF2F2" stroke="#991B1B"/>
+        </g>
+
+        <text class="k4aA" x="46" y="66">THE CONTEXT WINDOW: WHAT THE MODEL READS, AND THE PROVIDER RECEIVES</text>
+        <text class="k4aL" x="64" y="98">model emits a tool call</text>
+        <text class="k4aM" x="64" y="116">refunds.issue(8812, 40 USD)</text>
+        <text class="k4aS" x="64" y="131">no key, no header, no token</text>
+        <text class="k4aL" x="594" y="98">tool result into context</text>
+        <text class="k4aM" x="594" y="116">refund r_1042: issued</text>
+        <text class="k4aS" x="594" y="131">the token never comes back</text>
+
+        <text class="k4aS" x="186" y="180">the call, no key</text>
+        <text class="k4aK" x="462" y="180" text-anchor="middle">THE KEY NEVER CROSSES THE LINE ABOVE</text>
+        <text class="k4aS" x="735" y="180" text-anchor="end">the result, no key</text>
+
+        <text class="k4aK" x="64" y="220">BROKER (IN THE MCP SERVER)</text>
+        <text class="k4aS" x="64" y="238">1 look up the agent's identity</text>
+        <text class="k4aS" x="64" y="254">2 fetch or mint a short-lived token</text>
+        <text class="k4aS" x="64" y="270">3 attach it to the outbound call</text>
+        <text class="k4aL" x="394" y="222">payments API</text>
+        <text class="k4aS" x="394" y="240">outbound request:</text>
+        <text class="k4aM" x="394" y="256">Authorization: Bearer</text>
+        <text class="k4aM" x="394" y="272">hx_live_9f2c...</text>
+        <text class="k4aK" x="654" y="220">4 STRIP ON THE WAY BACK</text>
+        <text class="k4aS" x="654" y="238">drop Authorization and</text>
+        <text class="k4aS" x="654" y="254">Set-Cookie, redact key</text>
+        <text class="k4aS" x="654" y="270">patterns in the body</text>
+
+        <text class="k4aL" x="64" y="337">secret store or token issuer</text>
+        <text class="k4aR" x="394" y="337">DAY ONE:</text>
+        <text class="k4aS" x="456" y="337">key in the tool's env; a 401 echoed it into context</text>
+
+        <text class="k4aN" x="30" y="374">The model never holds the key, so no ticket can talk it into printing one. What it can call is unchanged.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - the key path runs below the context window: the model sends a call and gets a result, and only the broker ever touches the token</figcaption>
+    </figure>
+
+    <details class="card" open>
+      <summary><span class="mode live">Live</span>What a broker does<span class="mini">2 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p><strong>It holds the keys.</strong> Or better, it holds the right to mint them: it asks a secret store or a token issuer for a credential when a call needs one. The agent process, its prompt and its tool results never see the value.</p>
+        <p><strong>It attaches per call.</strong> The model emits <code>refunds.issue</code> with an order id and an amount. The broker decides which identity that call runs as, fetches the token for that identity, and puts it in the <code>Authorization</code> header of the outbound request. One call, one attachment.</p>
+        <p><strong>It never returns them.</strong> On the way back it drops credential headers and redacts anything that looks like a key in the response body, including error text. Session 1's place 3, the 401 error that printed the key prefix, is closed here or nowhere.</p>
+        <p><strong>It can enforce more than the key.</strong> Because every call passes through it, the broker is a natural place to pin scope per tool, cap the rate, and write the audit record session 6 designs. None of that needs the model's cooperation.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>Why it does not shrink what the agent can do<span class="mini">2 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Be honest about what moves. A broker changes <strong>where the key is</strong>, not <strong>what the key allows</strong>. A poisoned ticket that steers the agent to send an email still gets the email sent, because the broker faithfully attaches the tickets key to a call the model chose. So on the bench, moving from rung 2 to rung 3 leaves the headline at <strong>6</strong> and the weighted blast radius at <strong>26</strong>.</p>
+        <p>What falls is what a leak is worth. With keys in the agent's environment, a stolen copy of any one reaches actions directly, with no agent and no gate in the way: the bench prints <strong>5</strong>. Behind a broker there is nothing in reach to steal: <strong>0</strong>. And the keys readable in the context fall from <strong>4 to 0</strong>. Those are different attacks from the headline's, and you need both numbers.</p>
+        <p>Shrinking what the agent can reach was session 3 (scopes). Putting a person in front of what is left is session 5 (gates).</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>Where the broker runs<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p><strong>Inside each MCP server.</strong> Each tool's server holds the right to its own credential and nothing else. The blast radius of compromising one server is one tool's key. The cost is that every server team implements fetching, attaching, stripping and redaction, and they will do it slightly differently.</p>
+        <p><strong>A gateway in front of several servers.</strong> One component attaches credentials for every upstream, so the strip and redaction logic exists once and is tested once. The cost is a single component that can mint every tool's token: you have rebuilt a concentration of power, and it needs the same scrutiny the shared admin key should have had.</p>
+        <p>Either way, the rule that matters is the same: the token the broker attaches is the broker's own credential for the upstream, never something the client handed in. Part 3 shows why the MCP specification makes that a MUST. How to rotate the long-lived root credentials a broker or vault itself depends on is covered in <a href="https://phoebefu6.github.io/learn-data-access-control-with-phoebe/courses/b6-secrets-and-keys.html">learn-data-access-control, secrets and keys</a>.</p>
+      </div>
+    </details>
+
+    <div class="callout example">
+      <span class="ex-pill">Real world</span>
+      <p><strong>The MCP specification already draws this line.</strong> Its security considerations for authorization (revision 2026-07-28, read 2026-11-10) say that when an MCP server calls an upstream API it needs a separate token for that upstream, and that the server MUST NOT pass through the token the client sent it. A broker is that rule turned into a component: the client's token gets the call into the server, and the server's own credential gets the call out.</p>
+    </div>
+  </section>
+
+  <section class="section" id="part-2">
+    <div class="section-kicker">
+      <span class="klabel">Part 2 · covers dynamic, short-lived secrets and redaction in traces</span>
+      <h2>Short-lived secrets, and traces that cannot leak them</h2>
+      <span class="tag concept">5 min live</span>
+    </div>
+    <p class="lede">A broker keeps the key out of the context. Two more places from session 1 remain: a key that leaks anyway should stop working soon, and the trace store should never hold one at all. Leases handle the first: the credential is minted for a request and dies on a timer. Redaction handles the second, and it has to happen before the write, because a trace store is searchable by everyone on call.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 424" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Top: a timeline of two database credential leases on a broken axis from 0 to 3 hours, then 24 hours. Lease a1 is minted with a TTL of 1 hour, renewed at 0:48 for another hour from that moment, and revoked at 1:24, when it stops working at once; the rest of its renewed time is shown dashed. Lease b2 is minted at 1 hour with a new username and password and simply expires at 2 hours. A brass line at 24 hours marks max_ttl, which no renewal can pass. Below: a trace pipeline. A span from the refunds call carrying an Authorization bearer header and a key in its body passes through a brass redact-before-write step that drops named headers and masks key patterns, and lands in the trace store with the values redacted. Under it, a canary test plants a fake key and expects zero hits in the store.">
+        <defs>
+          <filter id="k4bSk" x="-3%" y="-3%" width="106%" height="106%"><feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="2" seed="53" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="2.4" xChannelSelector="R" yChannelSelector="G"/></filter>
+          <pattern id="k4bHc" patternUnits="userSpaceOnUse" width="7" height="7" patternTransform="rotate(-38)"><line x1="0" y1="0" x2="0" y2="7" stroke="#B3832A" stroke-width="1" opacity=".5"/></pattern>
+          <marker id="k4bAr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M1 1 L9 5 L1 9" fill="none" stroke="#22141A" stroke-width="1.6" stroke-linecap="round"/></marker>
+        </defs>
+        <style>
+          .k4bH { font: 800 12px Inter, sans-serif; fill: #22141A; }
+          .k4bL { font: 600 12px Inter, sans-serif; fill: #22141A; }
+          .k4bS { font: 400 11px Inter, sans-serif; fill: #5E4A53; }
+          .k4bK { font: 700 11px Inter, sans-serif; fill: #5A400F; }
+          .k4bA { font: 700 11px Inter, sans-serif; fill: #2C0E1B; }
+          .k4bR { font: 800 11px Inter, sans-serif; fill: #991B1B; }
+          .k4bM { font: 600 11px ui-monospace, Menlo, monospace; fill: #22141A; }
+          .k4bN { font: 400 12px Inter, sans-serif; fill: #5E4A53; }
+        </style>
+
+        <text class="k4bH" x="30" y="24">LEASES DIE ON A TIMER OR ON COMMAND; TRACES ARE REDACTED BEFORE THEY ARE WRITTEN</text>
+
+        <g filter="url(#k4bSk)" fill="none" stroke="#22141A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="140" y="72" width="280" height="18" rx="4" fill="url(#k4bHc)" stroke="#B3832A"/>
+          <path d="M420 81 L500 81" stroke-dasharray="5 5" stroke="#5E4A53"/>
+          <path d="M300 66 L300 96" stroke="#43192A"/>
+          <path d="M420 68 L420 98" stroke="#43192A" stroke-width="3"/>
+          <rect x="340" y="130" width="200" height="18" rx="4" fill="url(#k4bHc)" stroke="#B3832A"/>
+          <path d="M130 170 L762 170 M788 170 L850 170"/>
+          <path d="M140 164 L140 176 M340 164 L340 176 M540 164 L540 176 M740 164 L740 176 M830 164 L830 176"/>
+          <path d="M830 64 L830 160" stroke="#B3832A" stroke-dasharray="4 4"/>
+          <rect x="30" y="256" width="200" height="74" rx="8" transform="rotate(-0.5 130 293)" fill="#FFFFFF"/>
+          <path d="M234 293 L286 293" marker-end="url(#k4bAr)"/>
+          <rect x="290" y="256" width="260" height="74" rx="8" transform="rotate(0.4 420 293)" fill="#FBF3E1" stroke="#B3832A"/>
+          <path d="M554 293 L606 293" marker-end="url(#k4bAr)"/>
+          <rect x="610" y="256" width="240" height="74" rx="8" transform="rotate(-0.4 730 293)" fill="#FFFFFF"/>
+          <rect x="290" y="352" width="560" height="38" rx="8" transform="rotate(0.2 570 371)" fill="#F8EEF2" stroke="#43192A"/>
+        </g>
+
+        <text class="k4bA" x="30" y="44">DATABASE CREDENTIALS, ONE PER REQUEST (VAULT TUTORIAL ROLE: DEFAULT_TTL 1H, MAX_TTL 24H)</text>
+        <text class="k4bM" x="30" y="85">lease a1</text>
+        <text class="k4bK" x="144" y="62">mint, TTL 1h</text>
+        <text class="k4bS" x="306" y="62">renew: +1h from now</text>
+        <text class="k4bA" x="428" y="108">revoke: dead at once</text>
+        <text class="k4bM" x="30" y="143">lease b2</text>
+        <text class="k4bS" x="344" y="124">mint: new user and password</text>
+        <text class="k4bS" x="548" y="143">expires at TTL, no renew</text>
+        <text class="k4bK" x="822" y="58" text-anchor="end">max_ttl</text>
+        <text class="k4bS" x="140" y="190" text-anchor="middle">0h</text>
+        <text class="k4bS" x="340" y="190" text-anchor="middle">1h</text>
+        <text class="k4bS" x="540" y="190" text-anchor="middle">2h</text>
+        <text class="k4bS" x="740" y="190" text-anchor="middle">3h</text>
+        <text class="k4bS" x="830" y="190" text-anchor="middle">24h</text>
+        <text class="k4bN" x="30" y="214">Revoke the token that created a lease and its leases go too; a prefix revoke kills a whole group at once.</text>
+
+        <text class="k4bA" x="30" y="246">TRACE PIPELINE</text>
+        <text class="k4bL" x="44" y="278">span: refunds call</text>
+        <text class="k4bM" x="44" y="296">Authorization: Bearer hx_</text>
+        <text class="k4bM" x="44" y="314">body: ...hx_live_9f2c...</text>
+        <text class="k4bK" x="304" y="278">REDACT BEFORE WRITE</text>
+        <text class="k4bS" x="304" y="296">drop named headers: Authorization,</text>
+        <text class="k4bS" x="304" y="314">Cookie; mask key patterns like hx_live_</text>
+        <text class="k4bL" x="624" y="278">trace store</text>
+        <text class="k4bM" x="624" y="296">Authorization: [redacted]</text>
+        <text class="k4bM" x="624" y="314">body: ...[key]...</text>
+        <text class="k4bA" x="304" y="376">CANARY:</text>
+        <text class="k4bS" x="362" y="376">plant a fake key in a test call; a search of the store must find zero hits</text>
+        <text class="k4bR" x="30" y="376">place 4 closed</text>
+
+        <text class="k4bN" x="30" y="412">Session 1's places 4 and 5: redaction closes the trace store; the broker keeps keys off the provider side.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - a leased credential is worth an hour to whoever copies it, and a redacted trace is worth nothing</figcaption>
+    </figure>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>Leases: what Vault actually guarantees<span class="mini">2 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>HashiCorp Vault's lease and database documentation (read at source 2026-11-10) is the clearest public description of the mechanism, so we use its words.</p>
+        <ul>
+          <li><strong>Every dynamic secret has a lease,</strong> and Vault returns a lease id with it. Static key-value secrets do not.</li>
+          <li><strong>The TTL is the lease's duration.</strong> Before it runs out you renew, or you request a new secret. A renewal counts from now, not from the original expiry.</li>
+          <li><strong>Revocation is immediate.</strong> Revoking a token also revokes every lease created with it, and a prefix revoke such as <code>vault lease revoke -prefix aws/</code> kills a whole group.</li>
+          <li><strong>The database engine creates a unique username and password on each request.</strong> The tutorial's example role uses <code>default_ttl=1h</code> and <code>max_ttl=24h</code>.</li>
+        </ul>
+        <p>For an agent this means two things. A credential that leaks through some path you missed is worth at most its remaining TTL. And because each request has its own user, compromising one consumer means revoking its credentials only, not rotating something everyone shares.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>Redaction rules that hold up<span class="mini">2 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p><strong>Redact before write, not after.</strong> A nightly scrub job leaves a window in which the key is searchable, replicated and backed up. The redaction step sits in the pipeline between the span and the store.</p>
+        <p><strong>Match two ways.</strong> By name: header and field names you know carry secrets, such as <code>Authorization</code>, <code>Cookie</code>, <code>Set-Cookie</code>, and any field named token, secret or key. By pattern: the prefixes your keys use, such as <code>hx_live_</code>, and the provider prefixes you hold, such as Stripe's <code>rk_</code> and <code>sk_</code>. Names catch structured data; patterns catch the key that turns up inside an error string.</p>
+        <p><strong>Test with a canary.</strong> A redaction rule you never tested is a rule you hope works. Plant an obviously fake key in a test call, in a header and in an error body, then search the store for it. The expected hit count is zero, and any hit is an alert. OWASP's LLM02:2025 lists tokenization and redaction among its prevention groups for sensitive information disclosure; the canary is how you know yours is on.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>The provider side: what is not in the context is not sent<span class="mini">1 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Place 5 has no redaction step you control: everything in the context window goes to the model provider on every turn, under whatever retention terms your contract sets. The only reliable fix is upstream of the request. With the broker in place no key is in the context, so no key is sent. Redaction of tool results in the broker (Part 1, step 4) is what keeps that true when a tool fails noisily.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>Vendor walkthroughs, as claims with their basis<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Setting up a Vault database secrets engine, a cloud provider's workload identity or an identity product's agent features is outside the 45 minutes. When you read those guides, sort each claim by its basis:</p>
+        <ul>
+          <li><strong>Mechanism you can check in the product's own reference:</strong> lease ids, TTLs, revoke semantics. The Vault facts above are of this kind.</li>
+          <li><strong>A default you should verify in your own deployment:</strong> TTL values in tutorials are examples, not recommendations for your workload.</li>
+          <li><strong>A vendor's description of its own product's safety:</strong> useful, but not independent evidence. Ask what the claim is measured against.</li>
+        </ul>
+        <p>None of those walkthroughs were run for this page; the snippets on it are read and edited, never deployed against a real service.</p>
+      </div>
+    </details>
+
+    <div class="callout example">
+      <span class="ex-pill">Real world</span>
+      <p><strong>One request, one database user.</strong> Vault's database secrets tutorial (read 2026-11-10) has the engine create a fresh username and password each time an application asks, under a role whose example lease is one hour, renewable to at most a day. Its point for Halyard: if the warehouse tool's credential turns up somewhere it should not, you revoke that one lease, and every other consumer keeps working.</p>
+    </div>
+  </section>
+
+  <section class="section" id="part-3">
+    <div class="section-kicker">
+      <span class="klabel">Part 3 · covers MCP authorization</span>
+      <h2>MCP authorization: the server is a resource server</h2>
+      <span class="tag concept">5 min live</span>
+    </div>
+    <p class="lede">So far the broker's job has been the outbound side. MCP authorization is the inbound side: how a client proves it may call the MCP server at all. The specification (revision 2026-07-28, read at source 2026-11-10) makes the server an OAuth 2.1 resource server and adds two rules that matter for agents more than anything else on the page: the token must be issued for this server, and the server must never forward it.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 500" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="MCP authorization flow per revision 2026-07-28. Three columns: MCP client, MCP server acting as an OAuth resource server, and the authorization server. Step 1, the client sends a request with no token. Step 2, the server answers 401 with a WWW-Authenticate header pointing to its Protected Resource Metadata, RFC 9728. Step 3, the client reads that metadata, which names the authorization server. Step 4, the client sends an authorization request with PKCE S256 and the resource parameter set to the server's URI, RFC 8707. Step 5, the authorization server returns a token whose audience is that MCP server only. Step 6, the client calls the server with the token in a header, never a query string. Step 7, the server checks the audience and rejects any token not issued to it. Step 8, the server calls the upstream payments API with its own separate token. A red dashed arrow from the server to the upstream API, struck through, shows token passthrough, which the specification forbids.">
+        <defs>
+          <filter id="k4cSk" x="-3%" y="-3%" width="106%" height="106%"><feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="2" seed="67" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="2.4" xChannelSelector="R" yChannelSelector="G"/></filter>
+          <pattern id="k4cHc" patternUnits="userSpaceOnUse" width="7" height="7" patternTransform="rotate(-38)"><line x1="0" y1="0" x2="0" y2="7" stroke="#B3832A" stroke-width="1" opacity=".5"/></pattern>
+          <marker id="k4cAr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M1 1 L9 5 L1 9" fill="none" stroke="#22141A" stroke-width="1.6" stroke-linecap="round"/></marker>
+          <marker id="k4cAd" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M1 1 L9 5 L1 9" fill="none" stroke="#991B1B" stroke-width="1.6" stroke-linecap="round"/></marker>
+        </defs>
+        <style>
+          .k4cH { font: 800 12px Inter, sans-serif; fill: #22141A; }
+          .k4cL { font: 600 12px Inter, sans-serif; fill: #22141A; }
+          .k4cS { font: 400 11px Inter, sans-serif; fill: #5E4A53; }
+          .k4cK { font: 700 11px Inter, sans-serif; fill: #5A400F; }
+          .k4cA { font: 700 11px Inter, sans-serif; fill: #2C0E1B; }
+          .k4cR { font: 800 11px Inter, sans-serif; fill: #991B1B; }
+          .k4cW { font: 800 12px Inter, sans-serif; fill: #FFFFFF; }
+          .k4cN { font: 400 12px Inter, sans-serif; fill: #5E4A53; }
+        </style>
+
+        <text class="k4cH" x="30" y="24">MCP AUTHORIZATION, REVISION 2026-07-28: A TOKEN FOR THIS SERVER, AND NEVER FORWARDED</text>
+
+        <rect x="110" y="88" width="40" height="208" fill="#EFE5E9"/>
+        <rect x="420" y="88" width="40" height="208" fill="#EFE5E9"/>
+        <rect x="725" y="88" width="40" height="174" fill="#EFE5E9"/>
+
+        <g filter="url(#k4cSk)" fill="none" stroke="#22141A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="40" y="40" width="180" height="44" rx="8" transform="rotate(-0.5 130 62)" fill="#43192A" stroke="#2C0E1B"/>
+          <rect x="340" y="40" width="200" height="44" rx="8" transform="rotate(0.4 440 62)" fill="#43192A" stroke="#2C0E1B"/>
+          <rect x="640" y="40" width="210" height="44" rx="8" transform="rotate(-0.4 745 62)" fill="#FFFFFF"/>
+          <path d="M130 118 L436 118" marker-end="url(#k4cAr)"/>
+          <path d="M440 152 L134 152" marker-end="url(#k4cAr)"/>
+          <path d="M130 186 L436 186" marker-end="url(#k4cAr)"/>
+          <path d="M130 220 L741 220" marker-end="url(#k4cAr)"/>
+          <path d="M745 254 L134 254" marker-end="url(#k4cAr)"/>
+          <path d="M130 288 L436 288" marker-end="url(#k4cAr)"/>
+          <rect x="340" y="300" width="200" height="42" rx="8" transform="rotate(-0.4 440 321)" fill="url(#k4cHc)" stroke="#B3832A"/>
+          <path d="M440 346 L440 400 L636 400" marker-end="url(#k4cAr)"/>
+          <path d="M400 346 L400 444 L636 444" stroke="#991B1B" stroke-dasharray="6 5" marker-end="url(#k4cAd)"/>
+          <path data-strike="1" d="M590 432 L614 456 M614 432 L590 456" stroke="#991B1B" stroke-width="3"/>
+          <rect x="640" y="380" width="210" height="80" rx="10" transform="rotate(0.4 745 420)" fill="#FFFFFF"/>
+        </g>
+
+        <text class="k4cW" x="130" y="60" text-anchor="middle">MCP client</text>
+        <text class="k4cS" x="130" y="76" text-anchor="middle" style="fill:#E6C9D4">the agent host</text>
+        <text class="k4cW" x="440" y="60" text-anchor="middle">MCP server</text>
+        <text class="k4cS" x="440" y="76" text-anchor="middle" style="fill:#E6C9D4">an OAuth resource server</text>
+        <text class="k4cL" x="745" y="60" text-anchor="middle">authorization server</text>
+        <text class="k4cS" x="745" y="76" text-anchor="middle">issues the tokens</text>
+
+        <text class="k4cS" x="160" y="110">1 request, no token yet</text>
+        <text class="k4cS" x="160" y="144">2 401 + WWW-Authenticate: PRM URL (RFC 9728)</text>
+        <text class="k4cS" x="160" y="178">3 read the metadata: it names the AS</text>
+        <text class="k4cK" x="160" y="212">4 authorization request: PKCE S256, resource = the server's URI (RFC 8707)</text>
+        <text class="k4cK" x="160" y="246">5 access token with aud = that MCP server only</text>
+        <text class="k4cS" x="160" y="280">6 call, Bearer token in a header</text>
+
+        <text class="k4cK" x="354" y="318">7 AUDIENCE CHECK</text>
+        <text class="k4cS" x="354" y="334">reject a token not issued to me</text>
+        <text class="k4cK" x="452" y="392">8 the server's own token</text>
+        <text class="k4cR" x="412" y="436">passthrough: MUST NOT</text>
+        <text class="k4cL" x="654" y="404">upstream API</text>
+        <text class="k4cS" x="654" y="422">payments, for refunds</text>
+        <text class="k4cS" x="654" y="440">trusts only its own audience</text>
+
+        <text class="k4cA" x="40" y="330">CLIENT MUSTS</text>
+        <text class="k4cS" x="40" y="348">PKCE, with S256</text>
+        <text class="k4cS" x="40" y="364">resource in both requests</text>
+        <text class="k4cS" x="40" y="380">no tokens in query strings</text>
+        <text class="k4cS" x="40" y="396">discover the AS from PRM</text>
+
+        <text class="k4cN" x="30" y="488">Steps 1 to 6 get a token into the server. Steps 7 and 8 are what stop that token from travelling any further.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - the client's token is bound to one server by its audience, and the server reaches upstream with a credential of its own</figcaption>
+    </figure>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>The MUSTs, in the order they bite<span class="mini">2 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>From the authorization section of the MCP specification, revision 2026-07-28, read at source 2026-11-10.</p>
+        <table class="clean">
+          <thead><tr><th>Rule</th><th>Strength</th><th>What it stops</th></tr></thead>
+          <tbody>
+            <tr><td>Authorization at all</td><td>optional; HTTP transports SHOULD conform</td><td>STDIO servers SHOULD NOT use the flow and take credentials from the environment, session 1's place 1</td></tr>
+            <tr><td>Protected Resource Metadata (RFC 9728)</td><td>MUST, server and client</td><td>clients guessing which authorization server to trust</td></tr>
+            <tr><td><code>resource</code> parameter (RFC 8707)</td><td>MUST in authorization and token requests</td><td>a token valid at every server the issuer serves</td></tr>
+            <tr><td>Audience validation</td><td>MUST; "MUST NOT accept or transit any other tokens"</td><td>a token for server A being replayed at server B</td></tr>
+            <tr><td>PKCE</td><td>MUST, S256 when capable</td><td>a stolen authorization code being redeemed</td></tr>
+            <tr><td>Tokens in query strings</td><td>MUST NOT</td><td>tokens landing in access logs and browser history</td></tr>
+            <tr><td>Client ID Metadata Documents</td><td>SHOULD; Dynamic Client Registration is deprecated</td><td>unbounded anonymous client registration</td></tr>
+          </tbody>
+        </table>
+        <p>One more for agents: when a token lacks a scope, the server answers 403 with <code>error="insufficient_scope"</code> and the client does step-up authorization for the extra scope. That is the protocol's version of session 3's advice: start small and ask for more when you need it.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>Token passthrough, and the four things it breaks<span class="mini">2 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>The specification's security best practices define token passthrough as an MCP server accepting a client's token that was not issued to it and forwarding it downstream, and forbid it. The listed risks, read at source:</p>
+        <ul>
+          <li><strong>Security control circumvention.</strong> The upstream's rate limits, validation and monitoring assume the token was issued for it. A forwarded token skips the server's own controls on the way.</li>
+          <li><strong>Accountability and audit trail.</strong> The upstream logs the client's identity, not the server's, so you cannot tell which server made the call. Session 6 needs that answer.</li>
+          <li><strong>Trust boundary.</strong> A token that works at several services turns one compromised server into access to all of them.</li>
+          <li><strong>Future compatibility.</strong> Controls added to the server later have no effect on calls that never really went through it.</li>
+        </ul>
+        <p>For Halyard: the refunds MCP server must reach payments with its own credential for payments, attached by the broker, never with the token the agent host used to reach the refunds server.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>OAuth 2.1: still a draft, and the specification cites an older one<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>MCP authorization is built on OAuth 2.1, which is an Internet-Draft, not a standard. The MCP revision 2026-07-28 cites draft -13; the latest on the IETF datatracker when this page was checked is <strong>draft-ietf-oauth-v2-1-17, dated 31 October 2026</strong>. Drafts, not standards: the text can still change.</p>
+        <ul>
+          <li><strong>PKCE is required</strong> for every authorization code flow.</li>
+          <li><strong>The implicit grant is removed,</strong> and the resource owner password credentials grant is not specified.</li>
+          <li><strong>Redirect URIs must match exactly</strong> a registered one (a loopback port is exempt).</li>
+          <li><strong>Refresh tokens are bound</strong> to the scope and resource servers the owner consented to.</li>
+          <li><strong>Sender-constraining is a SHOULD:</strong> DPoP or mutual TLS, so a copied access token is not usable by whoever copied it.</li>
+        </ul>
+        <p>What was not confirmed in the portion read: the exact refresh-token one-time-use wording. Check it in the current draft rather than in a summary.</p>
+      </div>
+    </details>
+
+    <div class="callout tip">
+      <p><strong>Re-verify the specification before you deliver this.</strong> The MCP specification and the OAuth 2.1 draft both change several times a year. Before you teach or build from this page, open the MCP versioning page, confirm the current revision is still 2026-07-28, and check the latest OAuth 2.1 draft number. If either moved, re-read the authorization section before trusting the table above.</p>
+    </div>
+
+    <div class="callout example">
+      <span class="ex-pill">Real world</span>
+      <p><strong>Audience is what makes a token single-purpose.</strong> RFC 8707's <code>resource</code> parameter lets the client tell the authorization server which resource the token is for, and the MCP specification requires the client to send it, set to the MCP server's canonical URI, even when the authorization server does not support it. Combined with the server's MUST to validate audience, a token stolen from Halyard's tickets server is refused at the refunds server.</p>
+    </div>
+  </section>
+
+  <section class="section" id="demo-4">
+    <div class="section-kicker">
+      <span class="klabel">Build-along</span>
+      <h2>Move Halyard's keys behind a broker</h2>
+      <span class="tag demo">★ 22 min · everyone builds</span>
+    </div>
+    <p class="lede">The bench starts on rung 2, where session 3 left Halyard (constructed). Move the keys behind a broker, watch which numbers fall and which do not, then break the broker the way real ones break. Then write the broker config, the redaction rule and page 4 of the access plan. If you have your own agent, write its config alongside Halyard's.</p>
+
+    <div class="asa-bench" data-preset="r2" data-title="Halyard blast-radius bench: put the keys behind a broker"></div>
+
+    <div class="steps">
+      <div class="step">
+        <p><strong>Read rung 2 before you change anything.</strong> The bench prints <strong>6 of 19 sensitive actions</strong> reachable from untrusted input with no gate, <strong>weighted 26</strong> (constructed weights), a stolen key reaching <strong>5</strong> actions directly, and <strong>4</strong> keys readable in the context. The shortest injected path ends at "send email to any address".</p>
+        <div class="prompt-box good"><span class="label">★ Step 1 · starting numbers, rung 2</span>headline           6 of 19
+weighted           26  (constructed weights)
+stolen key reaches 5
+keys in context    4
+worst path         ticket -&gt; agent -&gt; tickets tool -&gt; send email</div>
+      </div>
+      <div class="step">
+        <p><strong>Switch Broker to "Broker attaches them at call time".</strong> This is rung 3. The headline stays at <strong>6</strong> and the weighted number at <strong>26</strong>; a stolen key now reaches <strong>0</strong> and the keys in the context fall to <strong>0</strong>. Write one sentence on why the headline did not move: the broker attaches the same scoped key to whatever call the model chooses, so everything a poisoned ticket could steer the agent to, it still can.</p>
+        <div class="prompt-box good"><span class="label">★ Step 2 · what moved, rung 3</span>headline           6 -&gt; 6    (same calls, same scopes)
+weighted           26 -&gt; 26
+stolen key reaches 5 -&gt; 0    (nothing in reach to steal)
+keys in context    4 -&gt; 0    (the broker holds them)
+Why the headline stays: a broker changes where the key is,
+not what it allows. Scopes (s3) and gates (s5) move it.</div>
+      </div>
+      <div class="step">
+        <p><strong>Break it: tick "The refunds key leaks into a tool error".</strong> The bench prints a stolen key reaching <strong>2</strong> and <strong>1</strong> key readable in the context, while the headline stays at 6. One unredacted error message undid the broker for one tool. The broker is only as good as its error handling. Untick it before the next step.</p>
+        <div class="prompt-box good"><span class="label">★ Step 3 · trap t2, the leaky error</span>with the leak:  stolen key reaches 2, keys in context 1
+headline still 6, weighted 26
+Plan line: the broker redacts every tool result and error
+body before it returns to the agent, by header name and by
+key pattern. A tool error never carries a credential.</div>
+      </div>
+      <div class="step">
+        <p><strong>Write the broker config.</strong> One block per tool, using the identity map from session 2 and the scope table from session 3. This is a constructed shape to read and edit, not a real product's schema. Keep the TTL short; 15 minutes is a Halyard choice, not a standard.</p>
+        <div class="prompt-box good"><span class="label">★ Step 4 · broker config, Halyard (constructed)</span>broker: halyard-ops
+defaults:
+  ttl: 15m
+  passthrough: never        # client tokens stop at the server
+  redact: [Authorization, Cookie, Set-Cookie, hx_live_*, rk_*, sk_*]
+tools:
+  tickets:
+    identity: agent workload identity
+    scopes:   gmail.readonly gmail.send
+    audience: https://mcp-tickets.halyard.example
+  chat:
+    identity: agent workload identity
+    scopes:   channels:history chat:write
+    audience: https://mcp-chat.halyard.example
+  warehouse:
+    identity: agent workload identity
+    scopes:   wh.read.aggregates
+    audience: https://mcp-warehouse.halyard.example
+  refunds:
+    identity: requesting rep, via token exchange (s2)
+    scopes:   charges:read refunds:write:capped
+    audience: https://mcp-refunds.halyard.example
+  fetch:
+    identity: none
+    scopes:   none</div>
+      </div>
+      <div class="step">
+        <p><strong>Write the trace redaction rule and its canary.</strong> The rule runs before the write; the canary proves it runs. Pick a fake key value nobody could mistake for a real one.</p>
+        <div class="prompt-box good"><span class="label">★ Step 5 · trace redaction and canary test</span>trace redaction (in the pipeline, before the store)
+1 drop header values: Authorization, Cookie, Set-Cookie
+2 mask body matches:  hx_live_..., rk_..., sk_...
+3 mask any field named token, secret, key, password
+canary (nightly)
+  call warehouse with hx_live_CANARY0001 in a header
+  and in a forced error body
+  search trace store and transcripts for CANARY0001
+  expected hits: 0. Any hit pages the platform team.</div>
+      </div>
+      <div class="step">
+        <p><strong>Write page 4 of the access plan.</strong> The broker design in plain words, matching Halyard's agreed design, with the bench numbers you copied rather than remembered.</p>
+        <div class="prompt-box good"><span class="label">★ Step 6 · page 4 of the access plan, the broker design</span>Page 4: broker design (Halyard, constructed)
+Keys are attached at call time by a broker in each MCP server.
+The agent's process, prompt and tool results hold no keys.
+Tokens are short-lived (15m) and audience-bound to one server.
+Each server reaches its upstream with its own token;
+no client token is ever passed through.
+Tool results and errors are redacted before they return.
+Traces are redacted before write; a canary checks nightly.
+Bench rung 3: headline 6 (unchanged), weighted 26,
+stolen key 5 -&gt; 0, keys in context 4 -&gt; 0.
+Still open: 6 reachable actions. Session 5 gates them.</div>
+      </div>
+    </div>
+
+    <div class="callout tip">
+      <p><strong>Two numbers, two attacks.</strong> The headline counts what a poisoned input can steer the agent to do. The stolen-key number counts what someone holding a copy of a key can do with no agent at all. A broker is the cheapest way to drive the second to zero, and it does nothing for the first. If a review only reports one of them, ask for the other.</p>
+    </div>
+  </section>
+
+  <section class="section" id="exercise">
+    <div class="section-kicker">
+      <span class="klabel">Homework</span>
+      <h2>Before session 5</h2>
+      <span class="tag exercise">30 min</span>
+    </div>
+    <ol>
+      <li><strong>Find your broker.</strong> For each tool of your own agent, write where the key is attached today: in the agent's process, in the MCP server, or in a gateway. Every "agent's process" is a key the model can be talked into printing.</li>
+      <li><strong>Force an error.</strong> Make one tool fail on purpose (a wrong password, a bad host) and read exactly what comes back into the context. Write down anything that looks like a credential, a connection string or a key prefix.</li>
+      <li><strong>Run a canary.</strong> Put an obviously fake key in one test call and search your trace store and transcripts for it the next day. Record the hit count.</li>
+      <li><strong>Check one MCP server for passthrough.</strong> For one HTTP MCP server you run, find the code that calls upstream and write down whose token it sends. If it is the client's, that is the first fix.</li>
+    </ol>
+  </section>
+
+  <section class="section" id="quiz">
+    <div class="section-kicker">
+      <span class="klabel">Check yourself</span>
+      <h2>Three questions</h2>
+    </div>
+    <p>Clear all three and session 4 gets stamped in your passport.</p>
+
+    <div class="quiz-q" data-answer="2">
+      <p class="qtext">1 · Moving Halyard from rung 2 to rung 3, the bench headline stays at 6. Why is rung 3 still worth doing?</p>
+      <button class="qopt" type="button">A · It is not; if the headline does not fall, the change did nothing</button>
+      <button class="qopt" type="button">B · Because the broker blocks the poisoned ticket before the agent reads it</button>
+      <button class="qopt" type="button">C · Because a stolen key now reaches 0 actions instead of 5, and no keys are readable in the context, so a leak is worth nothing even though the agent can still be steered</button>
+      <button class="qopt" type="button">D · Because the broker cuts each tool's scopes further</button>
+      <p class="qwhy">The headline measures what a poisoned input can steer the agent to do, and the broker attaches the same scoped keys to whatever the model calls, so it stays at 6. What falls is the other attack: a copied key used directly. B is a guardrail, not a broker. D was session 3's work.</p>
+    </div>
+
+    <div class="quiz-q" data-answer="0">
+      <p class="qtext">2 · An MCP server validates that every token's audience is itself, and reaches its upstream API only with its own token. What does that pair prevent?</p>
+      <button class="qopt" type="button">A · A token issued for one server being replayed at another, and a client's token travelling past the server to services that never issued it, with the audit trail pointing at the wrong caller</button>
+      <button class="qopt" type="button">B · Prompt injection in the tool results the server returns</button>
+      <button class="qopt" type="button">C · The client needing PKCE</button>
+      <button class="qopt" type="button">D · Any need for scopes, because audience replaces them</button>
+      <p class="qwhy">Audience validation binds a token to one server; no passthrough stops it going further, which keeps the upstream's controls and logs meaningful. Neither touches injection (B). PKCE is still a MUST (C), and audience says where a token works, not what it may do there (D).</p>
+    </div>
+
+    <div class="quiz-q" data-answer="3">
+      <p class="qtext">3 · Of session 1's five places a key ends up, which does a redaction step before write close, and what else does keeping keys out of the context close?</p>
+      <button class="qopt" type="button">A · The environment variable; nothing else</button>
+      <button class="qopt" type="button">B · The system prompt; and the environment variable</button>
+      <button class="qopt" type="button">C · None of them; redaction only hides keys from people, not from the model</button>
+      <button class="qopt" type="button">D · Logs and traces (place 4); and because no key is in the context, none is sent to the model provider (place 5)</button>
+      <p class="qwhy">Redaction in the trace pipeline closes place 4. Place 5 has no filter you control, so the only fix is upstream: the broker keeps keys out of the context, so nothing reaches the provider. The environment (A, B) is where a key legitimately belongs, and now it is the broker's, not the agent's.</p>
+    </div>
+
+    <p class="quiz-score"></p>
+  </section>
+
+  <section class="section" id="official">
+    <div class="section-kicker">
+      <span class="klabel">Sources covered</span>
+      <h2>What this session teaches, and where it came from</h2>
+    </div>
+    <div class="covered">
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">MCP specification, authorization, security considerations and security best practices, revision 2026-07-28 (read 2026-11-10)</span><span class="note">Resource server role, PRM, resource parameter, audience validation, PKCE S256, no query-string tokens, CIMD over DCR, insufficient_scope; no token passthrough and its four listed risks</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">OAuth 2.1, draft-ietf-oauth-v2-1-17, 31 Oct 2026 (read 2026-11-10)</span><span class="note">A draft, not a standard; MCP cites -13. PKCE required, implicit removed, exact redirect match, sender-constraining SHOULD</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">RFC 8707 Resource Indicators (read) and RFC 9728 Protected Resource Metadata (cited)</span><span class="note">8707 read at source; 9728 cited by name through the MCP specification's requirements</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">HashiCorp Vault leases and database secrets tutorial (read 2026-11-10)</span><span class="note">Lease ids, TTL, renew from now, immediate revoke, token revoke takes its leases, prefix revoke, a user per request, 1h and 24h example role</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">OWASP Top 10 for LLM Applications 2025, LLM02 (read 2026-11-10)</span><span class="note">Security credentials as sensitive information; tokenization and redaction as a prevention group</span></div>
+      <div class="covered-row"><span class="status pill light">◐</span><span class="name">Bench numbers (6, 26, stolen key 5 to 0, keys in context 4 to 0, trap 2 and 1)</span><span class="note">Computed by a graph search in your browser on a constructed graph with constructed weights</span></div>
+      <div class="covered-row"><span class="status pill light">◐</span><span class="name">Halyard's broker, config, TTL, redaction rule and canary</span><span class="note">Constructed for teaching, grounded in the no-passthrough rule and Vault leases; no real company</span></div>
+    </div>
+    <p class="mono" style="margin-top:14px">Every fact on this page, and its verification tier, is recorded in the course's source map.</p>
+  </section>
+
+  <section class="cheat" id="cheatsheet">
+    <h3>Session 4 cheat sheet <span>· pin this</span></h3>
+    <div class="grid-2">
+      <div class="cheat-item"><b>The model needs the result, not the key</b><span>The tool call carries a name and arguments; the broker attaches the token below the context window.</span></div>
+      <div class="cheat-item"><b>A broker changes where, not what</b><span>Rung 3: headline stays 6, stolen key 5 to 0, keys in context 4 to 0.</span></div>
+      <div class="cheat-item"><b>Strip on the way back</b><span>One unredacted tool error undoes the broker for that tool (trap t2: stolen key reaches 2).</span></div>
+      <div class="cheat-item"><b>Lease, do not hold</b><span>Every dynamic secret has a lease and a TTL; revoke is immediate; one request, one database user.</span></div>
+      <div class="cheat-item"><b>Redact before write, prove it with a canary</b><span>Match header names and key patterns; a fake key must find zero hits in the store.</span></div>
+      <div class="cheat-item"><b>Audience, and no passthrough</b><span>Tokens are issued for one MCP server, validated there, and never forwarded upstream.</span></div>
+    </div>
+  </section>
+
+  <div class="callout next">
+    <span class="nx-pill">Next session</span>
+    <p>The keys are out of reach, but six sensitive actions are still one poisoned ticket away. Session 5 decides when the agent must ask first: the lethal trifecta, the design patterns that break it, and gates on the irreversible calls, with the bench showing the headline finally falling.</p>
+  </div>
+
+  <footer class="pagefoot">
+    <span>Session 4 of 6 · learn-agent-secrets-access-with-phoebe · by Phoebe Fu &nbsp;·&nbsp; 📚 <a href="https://phoebefu6.github.io/learn-with-phoebe/">Learn with Phoebe ↗</a></span>
+    <span><a href="03-scope-the-tool.html">← Prev: Scope the tool, not the agent</a> &nbsp;·&nbsp; <a href="05-when-the-agent-must-ask.html">Next: When the agent must ask first →</a></span>
+  </footer>
+
+</main>
+
+<script src="../assets/app.js?v=1"></script>
+<script src="../assets/asa-sample.js?v=1"></script>
+<script src="../assets/asa-live.js?v=3"></script>
+</body>
+</html>

@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- social:start -->
+<meta name="description" content="Session 5 of 6. The lethal trifecta drawn on Halyard's real tools, approval gates that show the approver the exact arguments, and the open argument between injection-resistant design patterns and approval fatigue, with the gates placed on a bench that computes in your browser.">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Learn with Phoebe">
+<meta property="og:title" content="When the agent must ask first - learn secrets and access for AI agents with phoebe">
+<meta property="og:description" content="Session 5 of 6. Cut one leg of the lethal trifecta, gate what cannot be undone, and weigh design patterns against approval fatigue.">
+<meta property="og:url" content="https://phoebefu6.github.io/learn-agent-secrets-access-with-phoebe/courses/05-when-the-agent-must-ask.html">
+<meta property="og:image" content="https://phoebefu6.github.io/learn-agent-secrets-access-with-phoebe/assets/og-cover.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="When the agent must ask first - learn secrets and access for AI agents with phoebe">
+<meta name="twitter:description" content="Session 5 of 6. The lethal trifecta, approval gates, and the open argument about fatigue.">
+<meta name="twitter:image" content="https://phoebefu6.github.io/learn-agent-secrets-access-with-phoebe/assets/og-cover.png">
+<!-- social:end -->
+<title>Session 5 · When the agent must ask first - learn secrets and access for AI agents with phoebe</title>
+<link rel="stylesheet" href="../assets/style.css?v=2">
+</head>
+<body>
+
+<div class="toolbar">
+  <div class="wrap">
+    <span class="crumb"><a href="../index.html">learn-agent-secrets-access-with-phoebe</a> / Session 5 of 6</span>
+    <button class="btn" id="toggle-all" type="button">Expand all</button>
+    <button class="btn primary" id="zoom-toggle" type="button">Projector zoom: off</button>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="wrap">
+    <div class="eyebrow">Learn Secrets &amp; Access for AI Agents with Phoebe · Session 5 of 6</div>
+    <h1>When the agent must <span class="accent">ask first</span></h1>
+    <p class="sub">After session 4 Halyard's keys are cut to the job and held by a broker the model never sees. A poisoned ticket still reaches six sensitive actions, because the agent's own legitimate access is enough to read the inbox and send it somewhere. No key change fixes that. Tonight we name the shape of the problem, the lethal trifecta, decide which leg to cut, put a person in front of the calls that cannot be undone, and then sit with an argument the field has not settled: whether better designs or more approvals are the safer bet against injection.</p>
+    <div class="chip-row">
+      <span class="chip level">🟠 Deeper</span>
+      <span class="chip audience">Builders and platform engineers</span>
+      <span class="chip audience">Gate rules, read and edited</span>
+      <span class="chip time">45 min</span>
+    </div>
+    <div class="agenda">
+      <span class="a1" style="flex:1">0-3 · Welcome</span>
+      <span class="a2" style="flex:4">3-18 · Trifecta, gates, the open argument</span>
+      <span class="a3" style="flex:5">18-40 · Build-along: place the gates</span>
+      <span class="a4" style="flex:1">40-45 · Q&amp;A</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section class="section" id="intro">
+    <div class="section-kicker">
+      <span class="klabel">Part 0</span>
+      <h2>Where we start</h2>
+    </div>
+    <p class="lede">The running case is still the constructed Halyard example: an invented logistics SaaS whose ops agent reads a Gmail support inbox through the tickets tool, queries the warehouse, issues refunds up to a limit, posts to Slack through the chat tool, and fetches the tracking pages customers paste into tickets. After sessions 3 and 4 every tool holds its own scoped key behind a broker, and the bench prints <strong>6 of 19</strong> sensitive actions still reachable from untrusted input. Those six are not leaks of a key. They are the agent doing its job, steered by someone else. Tonight's question is where a person has to say yes.</p>
+
+    <div class="legend">
+      <span class="pill">🎫 Clear all three quiz questions to stamp your passport</span>
+      <span class="pill">Live = presented in the 45 minutes</span>
+      <span class="pill">Self-study = the full depth, after class</span>
+      <span class="pill">★ Build-along = do it yourself</span>
+    </div>
+
+    <div class="callout win">
+      <p><strong>★ What you walk out with tonight.</strong> A way to spot the lethal trifecta in any agent design and the habit of cutting one leg on purpose; gate rules that say which action waits for whom and what that person sees; an honest view of the design-pattern argument and the fatigue argument, neither one settled; and page 5 of Halyard's agent access plan, with the blast radius falling from 6 to 3 on the bench.</p>
+    </div>
+  </section>
+
+  <section class="section" id="part-1">
+    <div class="section-kicker">
+      <span class="klabel">Part 1 · covers the lethal trifecta</span>
+      <h2>Three legs, and why you cut one</h2>
+      <span class="tag concept">5 min live</span>
+    </div>
+    <p class="lede">Three capabilities are each harmless on their own and dangerous together: reading private data, reading text a stranger wrote, and being able to send something out. Halyard's agent has all three on its first afternoon, not through any one bad decision but because each tool was reasonable when it was added. Draw the legs with the real tools on them and the attack path draws itself.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 430" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Halyard's lethal trifecta. Leg one, untrusted input: ticket body, customer email, fetched web page. Leg two, private data: the tickets tool reads the support inbox, the chat tool reads every public channel, the refunds tool reads charges. Leg three, a way out: send email to any address, fetch any URL. A red path runs from a poisoned ticket into the ops agent, from the agent into the support inbox, and from the agent out through fetch with the inbox text in the query string. A brass gate sits on the way-out leg, where Halyard cuts the triangle.">
+        <defs>
+          <filter id="k5aSk" x="-3%" y="-3%" width="106%" height="106%"><feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="2" seed="51" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="2.4" xChannelSelector="R" yChannelSelector="G"/></filter>
+          <pattern id="k5aHc" patternUnits="userSpaceOnUse" width="7" height="7" patternTransform="rotate(-38)"><line x1="0" y1="0" x2="0" y2="7" stroke="#991B1B" stroke-width="1" opacity=".5"/></pattern>
+          <marker id="k5aAr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M1 1 L9 5 L1 9" fill="none" stroke="#22141A" stroke-width="1.6" stroke-linecap="round"/></marker>
+          <marker id="k5aAd" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M1 1 L9 5 L1 9" fill="none" stroke="#991B1B" stroke-width="1.6" stroke-linecap="round"/></marker>
+        </defs>
+        <style>
+          .k5aH { font: 800 12px Inter, sans-serif; fill: #22141A; }
+          .k5aL { font: 600 12px Inter, sans-serif; fill: #22141A; }
+          .k5aS { font: 400 11px Inter, sans-serif; fill: #5E4A53; }
+          .k5aR { font: 800 11px Inter, sans-serif; fill: #991B1B; }
+          .k5aK { font: 700 11px Inter, sans-serif; fill: #5A400F; }
+          .k5aA { font: 700 11px Inter, sans-serif; fill: #2C0E1B; }
+          .k5aM { font: 600 11px ui-monospace, Menlo, monospace; fill: #991B1B; }
+          .k5aN { font: 400 12px Inter, sans-serif; fill: #5E4A53; }
+        </style>
+
+        <text class="k5aH" x="30" y="24">HALYARD'S TRIFECTA, DRAWN ON ITS OWN TOOLS (CONSTRUCTED)</text>
+
+        <g filter="url(#k5aSk)" fill="none" stroke="#22141A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="30" y="56" width="230" height="120" rx="12" transform="rotate(-0.5 145 116)" fill="#FEF2F2" stroke="#991B1B"/>
+          <rect x="30" y="236" width="230" height="130" rx="12" transform="rotate(0.4 145 301)" fill="#F8EEF2" stroke="#43192A"/>
+          <rect x="350" y="176" width="160" height="70" rx="12" transform="rotate(-0.4 430 211)" fill="#F8EEF2" stroke="#43192A"/>
+          <rect x="640" y="150" width="210" height="120" rx="12" transform="rotate(0.5 745 210)" fill="#FFFFFF"/>
+          <path d="M145 182 L145 230" stroke="#D8C7CE" stroke-dasharray="4 5"/>
+          <path d="M264 116 C320 116 350 140 372 172" stroke="#991B1B" marker-end="url(#k5aAd)"/>
+          <path d="M370 250 C342 282 304 292 266 294" stroke="#991B1B" marker-end="url(#k5aAd)"/>
+          <path d="M514 204 L634 204" stroke="#991B1B" marker-end="url(#k5aAd)"/>
+          <rect x="560" y="180" width="8" height="50" rx="2" fill="#B3832A" stroke="#B3832A"/>
+          <rect x="590" y="180" width="8" height="50" rx="2" fill="#B3832A" stroke="#B3832A"/>
+          <path d="M556 182 L602 182" stroke="#B3832A" stroke-width="3"/>
+          <path d="M556 194 L602 194" stroke="#B3832A" stroke-width="3"/>
+        </g>
+
+        <text class="k5aA" x="46" y="80">LEG 1 · UNTRUSTED INPUT</text>
+        <text class="k5aS" x="46" y="104">ticket body</text>
+        <text class="k5aS" x="46" y="124">customer email</text>
+        <text class="k5aS" x="46" y="144">fetched web page</text>
+        <text class="k5aR" x="272" y="104">1 poisoned ticket</text>
+
+        <text class="k5aA" x="46" y="260">LEG 2 · PRIVATE DATA</text>
+        <text class="k5aS" x="46" y="284">tickets: the support inbox</text>
+        <text class="k5aS" x="46" y="304">chat: every public channel</text>
+        <text class="k5aS" x="46" y="324">refunds: charges</text>
+        <text class="k5aL" x="46" y="352">reading is the job</text>
+        <text class="k5aR" x="282" y="320">2 reads the inbox</text>
+
+        <text class="k5aL" x="430" y="206" text-anchor="middle">ops agent</text>
+        <text class="k5aS" x="430" y="224" text-anchor="middle">reads, then decides</text>
+
+        <text class="k5aR" x="520" y="152">3 out via fetch</text>
+        <text class="k5aM" x="520" y="168">?q=inbox text</text>
+        <text class="k5aK" x="534" y="250">Halyard's gate</text>
+
+        <text class="k5aA" x="656" y="174">LEG 3 · A WAY OUT</text>
+        <text class="k5aS" x="656" y="198">send email to any address</text>
+        <text class="k5aS" x="656" y="218">fetch any URL</text>
+        <text class="k5aK" x="656" y="252">cut here, by a person</text>
+
+        <text class="k5aN" x="30" y="396">Cut one leg and the path breaks. Halyard keeps reading, because it is the job, and gates the way out.</text>
+        <text class="k5aN" x="30" y="414">The bench flags this triangle as present on rungs 0 to 3 and broken at rung 4.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - three legs, each reasonable alone; the attack needs all three, so you only have to cut one</figcaption>
+    </figure>
+
+    <details class="card" open>
+      <summary><span class="mode live">Live</span>Willison's three legs<span class="mini">2 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p><strong>The three parts.</strong> Simon Willison's post of 16 June 2025 (read at source) names them: access to private data, exposure to untrusted content, and the ability to communicate externally. An agent with all three can be tricked by an attacker into exfiltrating data: the untrusted content carries the instruction, the private data is the payload, and the external channel is the exit.</p>
+        <p><strong>Why detection is not the answer.</strong> Guardrail products that cite roughly 95% detection are, in his words about web security, a failing grade: an attacker gets to try again, and a 1-in-20 miss rate is a working exploit. His advice is structural, to avoid the combination entirely rather than filter it.</p>
+        <p><strong>Why it arrives by accident.</strong> The post points at MCP's mix-and-match model: install one server that reads your email and another that fetches URLs, and you have assembled all three legs without designing anything. Halyard did exactly that, one reasonable tool at a time.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>Which leg Halyard cuts, and why that one<span class="mini">2 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p><strong>Not untrusted input.</strong> The agent exists to read tickets that customers write. Stop it reading them and there is no agent.</p>
+        <p><strong>Not private data.</strong> Reading the support inbox, the channels and the charges is the job too. Sessions 3 and 4 already cut this leg as far as it goes: the tickets tool reads with <code>gmail.readonly</code>, nothing broader.</p>
+        <p><strong>The way out.</strong> What is left is the exit: sending email to any address and fetching any URL. Neither needs to be removed. Both need a person in front of them when the destination is not already trusted. That is the gate in the figure, and it is the bench's trifecta flag: it reads present on rungs 0 to 3 and broken at rung 4, the rung where send email and fetch sit behind approval.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>OWASP LLM06: excessive autonomy, and "require user approval"<span class="mini">1 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>OWASP's LLM06:2025 Excessive Agency (read at source) has three root causes: excessive functionality, excessive permissions and excessive autonomy. Sessions 3 and 4 dealt with the first two. Excessive autonomy is the third: high-impact actions taken without anyone independently verifying or approving them, such as a delete with no confirmation.</p>
+        <p>Its prevention list includes "require user approval" for high-impact actions. Its own example scenario is close to Halyard's: an email-summary assistant whose plugin can also send, where an indirect prompt injection forwards inbox data. The fix it gives is a read-only extension, a read-only OAuth scope, and the user approving each send.</p>
+      </div>
+    </details>
+
+    <div class="callout example">
+      <span class="ex-pill">Real world</span>
+      <p><strong>A name that stuck because it is checkable.</strong> Willison's "lethal trifecta" post turned a vague worry into a three-item checklist you can run against any agent design in a minute: list the tools, mark each one private data, untrusted input or way out, and see if all three columns are filled. His closing advice fits in a line: "avoid that lethal trifecta combination entirely."</p>
+    </div>
+  </section>
+
+  <section class="section" id="part-2">
+    <div class="section-kicker">
+      <span class="klabel">Part 2 · covers approval gates for irreversible and high-value actions</span>
+      <h2>Gates where a mistake cannot be undone</h2>
+      <span class="tag concept">5 min live</span>
+    </div>
+    <p class="lede">A gate is a pause between the agent choosing a call and the call running. A person looks, then says yes or no, and the decision is written down. The design work is in three choices: which calls wait, what the person is shown, and what happens when nobody answers. Get the second one wrong and the gate approves whatever the model says it is doing.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 412" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="The gate mechanism. The ops agent proposes a call. The gate shows the approver the exact arguments: send_email to an outside address with an inbox export attached, while the model's own summary, replying to the customer, is struck out. The approver, Dana or on-call, approves or rejects, and times out to reject. Both outcomes go into a decision record with the action, an arguments hash, the approver and the time, which session 6 uses. Below, two lists: through the gate go send email, refund up to 200 USD, and fetch outside the carrier allowlist; straight through go the reads and fetch to an allowlisted carrier tracking domain.">
+        <defs>
+          <filter id="k5bSk" x="-3%" y="-3%" width="106%" height="106%"><feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="2" seed="53" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="2.4" xChannelSelector="R" yChannelSelector="G"/></filter>
+          <pattern id="k5bHc" patternUnits="userSpaceOnUse" width="7" height="7" patternTransform="rotate(-38)"><line x1="0" y1="0" x2="0" y2="7" stroke="#B3832A" stroke-width="1" opacity=".5"/></pattern>
+          <marker id="k5bAr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M1 1 L9 5 L1 9" fill="none" stroke="#22141A" stroke-width="1.6" stroke-linecap="round"/></marker>
+        </defs>
+        <style>
+          .k5bH { font: 800 12px Inter, sans-serif; fill: #22141A; }
+          .k5bL { font: 600 12px Inter, sans-serif; fill: #22141A; }
+          .k5bS { font: 400 11px Inter, sans-serif; fill: #5E4A53; }
+          .k5bR { font: 800 11px Inter, sans-serif; fill: #991B1B; }
+          .k5bK { font: 700 11px Inter, sans-serif; fill: #5A400F; }
+          .k5bA { font: 700 11px Inter, sans-serif; fill: #2C0E1B; }
+          .k5bM { font: 600 11px ui-monospace, Menlo, monospace; fill: #22141A; }
+          .k5bN { font: 400 12px Inter, sans-serif; fill: #5E4A53; }
+        </style>
+
+        <text class="k5bH" x="30" y="24">A GATE SHOWS THE CALL, NOT THE MODEL'S STORY ABOUT THE CALL (CONSTRUCTED)</text>
+
+        <g filter="url(#k5bSk)" fill="none" stroke="#22141A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="30" y="56" width="150" height="70" rx="10" transform="rotate(-0.6 105 91)" fill="#F8EEF2" stroke="#43192A"/>
+          <path d="M184 90 L214 90" marker-end="url(#k5bAr)"/>
+          <rect x="220" y="44" width="300" height="160" rx="12" transform="rotate(0.3 370 124)" fill="#FBF3E1" stroke="#B3832A"/>
+          <path data-strike="1" d="M234 184 L420 180" stroke="#991B1B" stroke-width="2.4"/>
+          <path d="M524 90 L554 90" marker-end="url(#k5bAr)"/>
+          <rect x="560" y="56" width="130" height="76" rx="10" transform="rotate(-0.5 625 94)" fill="#FFFFFF"/>
+          <path d="M694 78 L714 62" marker-end="url(#k5bAr)"/>
+          <path d="M694 110 L714 128" marker-end="url(#k5bAr)"/>
+          <rect x="720" y="40" width="130" height="44" rx="8" fill="url(#k5bHc)" stroke="#B3832A"/>
+          <rect x="720" y="110" width="130" height="44" rx="8" fill="#FFFFFF"/>
+          <path d="M852 62 L866 62 L866 246 L856 246" marker-end="url(#k5bAr)"/>
+          <path d="M785 158 L785 210" marker-end="url(#k5bAr)"/>
+          <rect x="560" y="216" width="290" height="60" rx="10" transform="rotate(0.4 705 246)" fill="#F8EEF2" stroke="#43192A"/>
+          <rect x="30" y="300" width="400" height="80" rx="12" transform="rotate(-0.3 230 340)" fill="#FBF3E1" stroke="#B3832A"/>
+          <rect x="450" y="300" width="400" height="80" rx="12" transform="rotate(0.3 650 340)" fill="#FFFFFF"/>
+        </g>
+
+        <text class="k5bL" x="46" y="86">ops agent</text>
+        <text class="k5bS" x="46" y="104">proposes a call</text>
+
+        <text class="k5bK" x="236" y="68">THE APPROVER SEES</text>
+        <text class="k5bM" x="236" y="92">send_email</text>
+        <text class="k5bM" x="236" y="110">to: billing@mail-relay.example</text>
+        <text class="k5bM" x="236" y="128">attach: inbox_export.csv</text>
+        <text class="k5bM" x="236" y="146">subject: Re: ticket 4821</text>
+        <text class="k5bS" x="236" y="168">not the model's summary:</text>
+        <text class="k5bS" x="236" y="186">"replying to the customer"</text>
+
+        <text class="k5bL" x="574" y="82">approver</text>
+        <text class="k5bS" x="574" y="100">Dana or on-call</text>
+        <text class="k5bS" x="574" y="118">no answer: reject</text>
+
+        <text class="k5bK" x="736" y="66">approve</text>
+        <text class="k5bL" x="736" y="136">reject</text>
+
+        <text class="k5bA" x="576" y="240">DECISION RECORD (SESSION 6)</text>
+        <text class="k5bM" x="576" y="260">action, args hash, approver, time</text>
+
+        <text class="k5bK" x="46" y="324">THROUGH THE GATE: A PERSON SAYS YES</text>
+        <text class="k5bS" x="46" y="346">send email · refund up to 200 USD</text>
+        <text class="k5bS" x="46" y="366">fetch outside the carrier allowlist</text>
+
+        <text class="k5bA" x="466" y="324">STRAIGHT THROUGH: LOGGED, NO WAIT</text>
+        <text class="k5bS" x="466" y="346">reads: support inbox, public channels, charges</text>
+        <text class="k5bS" x="466" y="366">fetch to an allowlisted carrier tracking domain</text>
+
+        <text class="k5bN" x="30" y="402">Reads never wait for a person. Only calls that cannot be undone, move money or leave Halyard do.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - the approver reads the recipient and the attachment, not the agent's account of what it is doing</figcaption>
+    </figure>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>What to gate, and what not to<span class="mini">2 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p><strong>Gate a call when any one of three things is true.</strong> It cannot be undone (an email, once sent, is read). It moves value (a refund, however capped). It crosses a trust boundary (a fetch to a host nobody has vetted carries whatever is in its query string out of Halyard).</p>
+        <p><strong>Do not gate reads.</strong> Reading the inbox, the channels and the charges is the agent's job, happens all day, and changes nothing. A gate on reads buys a stream of prompts and no safety the scope table did not already give you.</p>
+        <p><strong>Do not gate your own channel.</strong> A post to the ops team's own Slack channel with <code>chat:write</code> reaches people who already work there. Session 3 removed <code>chat:write.public</code>, so the agent cannot post anywhere else.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>Show the arguments, not the summary<span class="mini">1 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>A poisoned ticket that can steer the call can also steer the model's description of the call. If the approval prompt says "replying to the customer", that sentence was written by the same model the attacker is talking to. The gate must render the actual arguments the tool will receive: the full recipient list, the attachment names, the refund amount and charge id, the full URL including its query string. The approver checks the call, not the story.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>Allowlists: the lane that does not wait<span class="mini">1 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Most of Halyard's fetches go to the same few carrier tracking sites. Gating every one of them would teach the approver to click yes. Instead, a named allowlist of carrier tracking domains is an auto-approve lane: a fetch to a domain on the list runs and is logged; a fetch anywhere else waits for a person. The allowlist is itself a control, so it has an owner and a review date, and adding a domain is a change someone signs.</p>
+        <p>The same lane works for email: replies to the address that opened the ticket could go straight through. Halyard's constructed design does not take that lane yet, and session 6's audit record is what would let you decide later.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>Gates are the last line, not the only one<span class="mini">2 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>OWASP LLM06 is careful here: logging, monitoring and rate limiting limit the damage of excessive agency but do not prevent it. A gate is the same kind of control. It catches what reaches it; it does nothing about what the scope table should have removed. That is why gates come fifth in Halyard's plan, after scopes and the broker, and why session 5's bench work starts on rung 3 rather than rung 0.</p>
+        <p>A gate is also a different control from a guardrail. A guardrail inspects the model's output and blocks text that looks wrong; how to build those is taught in <a href="https://phoebefu6.github.io/learn-ai-agents-with-phoebe/courses/b7-guardrails.html">learn-ai-agents, guardrails</a>. A gate asks a person about a specific call with specific arguments, whatever the text around it looked like.</p>
+      </div>
+    </details>
+
+    <div class="callout tip">
+      <p><strong>Decide the timeout before the first prompt fires.</strong> A gate with no timeout either blocks the queue forever or, worse, gets a quiet "auto-approve if nobody answers" patch in the middle of the night. Write down that silence means reject, and who gets paged instead.</p>
+    </div>
+  </section>
+
+  <section class="section" id="part-3">
+    <div class="section-kicker">
+      <span class="klabel">Part 3 · covers injection-resistant designs and approval fatigue, taught as a disagreement</span>
+      <h2>Designs against fatigue: the open argument</h2>
+      <span class="tag concept">5 min live</span>
+    </div>
+    <p class="lede">There are two serious answers to "the agent read something poisoned". One says: shape the agent so that untrusted text cannot change what it does next, and you need fewer gates. The other says: shapes cost so much capability that teams ship gates instead, and the real risk is a person who approves whatever they are shown. Both sides have a point. Neither has the measurement that would end the argument.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 392" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Two panels, no winner. Left, design patterns. Dual LLM: a privileged LLM with the tools hands work to a quarantined LLM with no tools that reads the untrusted text; only a symbolic reference crosses back. Plan-Then-Execute: the plan is fixed, then the ticket is read, then the plan runs; the ticket can fill values but not add steps. The cost is utility and engineering. Right, approval gates: a rising stack of approval prompts and a person clicking approve. The cost is attention.">
+        <defs>
+          <filter id="k5cSk" x="-3%" y="-3%" width="106%" height="106%"><feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="2" seed="57" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="2.4" xChannelSelector="R" yChannelSelector="G"/></filter>
+          <pattern id="k5cHc" patternUnits="userSpaceOnUse" width="7" height="7" patternTransform="rotate(-38)"><line x1="0" y1="0" x2="0" y2="7" stroke="#B3832A" stroke-width="1" opacity=".5"/></pattern>
+          <marker id="k5cAr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M1 1 L9 5 L1 9" fill="none" stroke="#22141A" stroke-width="1.6" stroke-linecap="round"/></marker>
+        </defs>
+        <style>
+          .k5cH { font: 800 12px Inter, sans-serif; fill: #22141A; }
+          .k5cL { font: 600 12px Inter, sans-serif; fill: #22141A; }
+          .k5cS { font: 400 11px Inter, sans-serif; fill: #5E4A53; }
+          .k5cK { font: 700 11px Inter, sans-serif; fill: #5A400F; }
+          .k5cA { font: 700 11px Inter, sans-serif; fill: #2C0E1B; }
+          .k5cW { font: 800 12px Inter, sans-serif; fill: #FFFFFF; }
+          .k5cM { font: 600 11px ui-monospace, Menlo, monospace; fill: #22141A; }
+          .k5cN { font: 400 12px Inter, sans-serif; fill: #5E4A53; }
+        </style>
+
+        <text class="k5cH" x="30" y="24">TWO ANSWERS TO A POISONED TICKET, AND NO WINNER DRAWN</text>
+
+        <g filter="url(#k5cSk)" fill="none" stroke="#22141A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="30" y="40" width="400" height="304" rx="14" transform="rotate(-0.3 230 192)" fill="#FFFFFF"/>
+          <rect x="450" y="40" width="400" height="304" rx="14" transform="rotate(0.3 650 192)" fill="#FFFFFF"/>
+          <rect x="50" y="94" width="160" height="50" rx="10" fill="#43192A" stroke="#43192A"/>
+          <rect x="250" y="94" width="160" height="50" rx="10" fill="#FEF2F2" stroke="#991B1B"/>
+          <path d="M214 119 L246 119" marker-end="url(#k5cAr)"/>
+          <path d="M330 148 L330 166 L130 166 L130 150" marker-end="url(#k5cAr)"/>
+          <rect x="50" y="222" width="110" height="36" rx="8" fill="#F8EEF2" stroke="#43192A"/>
+          <path d="M164 240 L182 240" marker-end="url(#k5cAr)"/>
+          <rect x="188" y="222" width="100" height="36" rx="8" fill="#FEF2F2" stroke="#991B1B"/>
+          <path d="M292 240 L310 240" marker-end="url(#k5cAr)"/>
+          <rect x="316" y="222" width="100" height="36" rx="8" fill="#F8EEF2" stroke="#43192A"/>
+          <rect x="470" y="248" width="160" height="20" rx="6" fill="#FFFFFF"/>
+          <rect x="488" y="223" width="160" height="20" rx="6" fill="#FFFFFF"/>
+          <rect x="506" y="198" width="160" height="20" rx="6" fill="#FFFFFF"/>
+          <rect x="524" y="173" width="160" height="20" rx="6" fill="#FFFFFF"/>
+          <rect x="542" y="152" width="160" height="16" rx="5" fill="#FFFFFF"/>
+          <rect x="560" y="110" width="160" height="36" rx="8" fill="url(#k5cHc)" stroke="#B3832A"/>
+          <circle cx="795" cy="112" r="12" fill="#FFFFFF"/>
+          <path d="M795 124 L795 172 M795 172 L780 198 M795 172 L810 198"/>
+          <path d="M795 140 C808 158 806 190 798 206"/>
+          <rect x="752" y="212" width="86" height="30" rx="8" fill="#FBF3E1" stroke="#B3832A"/>
+        </g>
+
+        <text class="k5cA" x="46" y="62">DESIGN PATTERNS: CONSTRAIN AFTER READING</text>
+        <text class="k5cL" x="50" y="84">Dual LLM</text>
+        <text class="k5cW" x="62" y="116">privileged LLM</text>
+        <text class="k5cW" x="62" y="134">has the tools</text>
+        <text class="k5cL" x="262" y="116">quarantined LLM</text>
+        <text class="k5cS" x="262" y="134">no tools, reads text</text>
+        <text class="k5cM" x="140" y="188">only a reference ($t1) crosses</text>
+        <text class="k5cL" x="50" y="212">Plan-Then-Execute</text>
+        <text class="k5cS" x="60" y="244">1 plan fixed</text>
+        <text class="k5cS" x="198" y="244">2 read ticket</text>
+        <text class="k5cS" x="326" y="244">3 run plan</text>
+        <text class="k5cS" x="50" y="284">the ticket can fill values, not add steps</text>
+        <text class="k5cA" x="50" y="320">costs: utility and engineering</text>
+
+        <text class="k5cA" x="466" y="62">APPROVAL GATES: A PERSON SAYS YES</text>
+        <text class="k5cL" x="572" y="133">Approve send_email?</text>
+        <text class="k5cK" x="795" y="232" text-anchor="middle">Approve</text>
+        <text class="k5cS" x="466" y="296">the next prompt looks like the last one</text>
+        <text class="k5cA" x="466" y="320">costs: attention, which runs out</text>
+
+        <text class="k5cN" x="30" y="374">No winner drawn: neither side has settled it, and no primary measurement of approval fatigue was found.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - designs spend capability to need fewer approvals; gates spend attention to keep capability; both bills are real</figcaption>
+    </figure>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>Six design patterns, and the principle under them<span class="mini">2 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Beurer-Kellner and colleagues, "Design Patterns for Securing LLM Agents against Prompt Injections" (2025, arXiv 2506.08837, read at source) start from one principle: once an agent has ingested untrusted input, it must be constrained so that input cannot trigger consequential actions. They give six patterns, each a different way to enforce that.</p>
+        <table class="clean">
+          <thead><tr><th>Pattern</th><th>The constraint</th><th>Where it would sit at Halyard</th></tr></thead>
+          <tbody>
+            <tr><td>Action-Selector</td><td>the model maps a request to a predefined tool call, with no feedback from results</td><td>"look up order status" buttons for reps</td></tr>
+            <tr><td>Plan-Then-Execute</td><td>a fixed plan is committed before untrusted data is read</td><td>plan "read ticket, look up charge, draft reply" first</td></tr>
+            <tr><td>LLM Map-Reduce</td><td>isolated sub-agents each handle one untrusted item; a separate step combines</td><td>summarising a day of tickets one by one</td></tr>
+            <tr><td>Dual LLM</td><td>a privileged model holds the tools; a quarantined model with no tools reads untrusted text</td><td>the quarantined model reads the ticket body</td></tr>
+            <tr><td>Code-Then-Execute</td><td>the agent writes a program that calls tools and sub-models, then it runs</td><td>a refund workflow written once, run per ticket</td></tr>
+            <tr><td>Context-Minimization</td><td>the user's prompt is removed from context after it has guided the first action</td><td>drop the ticket text before the reply is sent</td></tr>
+          </tbody>
+        </table>
+        <p>The Halyard column is constructed. The paper's own point is that every pattern costs some utility: an agent constrained this way cannot do some tasks a free agent could, and the case studies discuss that trade directly.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>CaMeL: security by construction, and its price<span class="mini">1 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Debenedetti and colleagues, "Defeating Prompt Injections by Design" (CaMeL, 2025, arXiv 2503.18813; the abstract was read at source) put a protective system layer around the model. It extracts the control flow and data flow from the trusted user query, so data retrieved later cannot change which steps run, and it uses capabilities to enforce security policies at each tool call, which stops private data leaving through a flow nobody authorised. It builds on the Dual LLM pattern.</p>
+        <p>The abstract reports the price on the AgentDojo benchmark: 77% of tasks solved with provable security, against 84% for an undefended system. Read that both ways. Seven points of tasks is the cost of a guarantee; a guarantee is what a 95% detector cannot give you.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>The counter-argument: approval fatigue<span class="mini">2 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p><strong>The claim.</strong> People approve what they are shown, if they are shown enough of it. A gate that fires all shift stops being read; the latest "Approve send_email?" gets the same click as the first one did. Too many gates become no gates, and they also teach the team that the agent is supervised when it is not.</p>
+        <p><strong>The evidence.</strong> This is a practitioner argument. No primary measurement of approval fatigue for agent gates was found in the sources behind this page, so treat it as a strong intuition, not a result.</p>
+        <p><strong>The disagreement, stated fairly.</strong> Design patterns cost utility and engineering time, and most teams have neither to spare this quarter. Gates cost attention, which is cheap on day one and scarce by month three. The pattern side can point to a measured cost (CaMeL's 77 against 84) and a guarantee; the gate side can point to the fact that gates ship this week. Nobody has measured both on the same agent. Halyard's constructed design takes the gate path for now, keeps the gated list short on purpose, and treats a pattern like Plan-Then-Execute as the next move if the approval log shows people clicking through.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>OWASP Top 10 for Agentic Applications<span class="mini">2 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>OWASP released a Top 10 for Agentic Applications on December 9, 2025 (release date read at its landing page). The list itself sits in a downloadable document that was not read for this page; the item names are known only from secondary sources, so they are reported, not reproduced here. Read it at source and map each item to your gate rules.</p>
+        <p>Whether a given design actually resists injection is a testing question, and it is taught in <a href="https://phoebefu6.github.io/learn-ai-red-team-with-phoebe/courses/b3-prompt-injection.html">learn-ai-red-team, prompt injection</a> and <a href="https://phoebefu6.github.io/learn-ai-red-team-with-phoebe/courses/b6-tool-abuse-and-agency.html">learn-ai-red-team, tool abuse and agency</a>. Those sessions attack the design built here; this one only builds it.</p>
+      </div>
+    </details>
+
+    <div class="callout example">
+      <span class="ex-pill">Real world</span>
+      <p><strong>A measured price for a guarantee.</strong> CaMeL's abstract is unusual because it prints the cost next to the protection: on AgentDojo, provable security came with 77% of tasks solved, against 84% undefended. That is the kind of number the approval-fatigue side does not yet have, which is why the argument is still open.</p>
+    </div>
+  </section>
+
+  <section class="section" id="demo-5">
+    <div class="section-kicker">
+      <span class="klabel">Build-along</span>
+      <h2>Place Halyard's gates</h2>
+      <span class="tag demo">★ 22 min · everyone builds</span>
+    </div>
+    <p class="lede">The bench below starts on rung 3: one scoped key per tool, all behind the broker, no gates. Move the Approval gates control and watch which actions drop out of reach, which stay, and what happens to the trifecta flag. Then try the shortcut every team is tempted by, gates on the day-one key, and read why it is not enough. The weights are constructed for teaching, so read the weighted number as a comparison between rungs, not a price.</p>
+
+    <div class="asa-bench" data-preset="r3" data-title="Halyard blast-radius bench: place the gates"></div>
+
+    <div class="steps">
+      <div class="step">
+        <p><strong>Read rung 3 before you touch anything.</strong> The bench prints <strong>6 of 19</strong> sensitive actions reachable, a weighted blast radius of <strong>26</strong> (constructed weights), and the trifecta flag <strong>present</strong>. The shortest injected path is ticket body, ops agent, tickets tool, send email to any address. No key leaks; the agent's own access is enough.</p>
+        <div class="prompt-box good"><span class="label">★ Step 1 · starting point, rung 3</span>rung 3 (broker on, no gates): 6 of 19 reachable, weighted 26
+trifecta: present
+path: ticket body -&gt; agent -&gt; tickets tool -&gt; send email to any address
+reachable: read the support inbox, send email to any address,
+  read every public channel, read charges, refund up to 200 USD,
+  fetch any URL</div>
+      </div>
+      <div class="step">
+        <p><strong>Set Approval gates to "Irreversible actions".</strong> The bench prints <strong>3 of 19</strong>, weighted <strong>11</strong>, <strong>3 approvals</strong>, and the trifecta flag flips to <strong>broken</strong>. The three gated actions are send email, refund up to 200 USD and fetch any URL. What is left is three reads: read the support inbox, read every public channel, read charges. The private-data leg is still there; the way out is not.</p>
+        <div class="prompt-box good"><span class="label">★ Step 2 · gates on irreversible actions</span>gates: irreversible actions -&gt; 3 of 19, weighted 11, 3 approvals
+trifecta: broken
+gated: send email, refund up to 200 USD, fetch any URL
+still reachable (reads): support inbox, every public channel, charges</div>
+      </div>
+      <div class="step">
+        <p><strong>Set gates to "Every write" and compare.</strong> Look at the reachable list. It is the same three reads. Gating more writes moves nothing here, because nothing reachable is a write any more. More gates past this point only add prompts, which is the fatigue argument from Part 3 showing up on the bench. Set gates back to "Irreversible actions".</p>
+        <div class="prompt-box good"><span class="label">★ Step 3 · every write, same three reads</span>gates: every write -&gt; reachable list unchanged:
+  read the support inbox, read every public channel, read charges
+lesson: once only reads are left, more gates buy prompts, not safety
+decision: keep gates on irreversible actions</div>
+      </div>
+      <div class="step">
+        <p><strong>Spring the trap: gates on the day-one key.</strong> Click ladder 0 (day one), then set Approval gates to "Irreversible actions". The bench prints <strong>6 of 19</strong>, weighted <strong>24</strong>, with <strong>9 approvals</strong>, and the trifecta reads broken. Six reads and posts are still reachable: read the support inbox, read every public channel, post in any channel, read staff email addresses, read the customer contact table, read charges. Gates on a broad key ask a person nine times and still leave as many sensitive actions open as rung 3 did with no gates at all.</p>
+        <div class="prompt-box good"><span class="label">★ Step 4 · the trap, gates on the shared key</span>rung 0 + gates on irreversible actions:
+  6 of 19, weighted 24, 9 approvals, trifecta broken
+still reachable: read the support inbox, read every public channel,
+  post in any channel, read staff email addresses,
+  read the customer contact table, read charges
+lesson: gates do not replace scopes; they sit on top of them</div>
+      </div>
+      <div class="step">
+        <p><strong>Write the gate rules.</strong> Five columns per gated action: what it is, who approves, what the approver sees, how long before silence means no, and what skips the gate. The values below are constructed for Halyard; change the people and timeouts to fit your own on-call.</p>
+        <div class="prompt-box good"><span class="label">★ Step 5 · gate rules (constructed)</span>action: send email
+  approver: support lead (Dana) or on-call
+  sees: every recipient, subject, full body, attachment names
+  timeout: 15 min, then reject and page on-call
+  skips gate: nothing yet
+
+action: refund up to 200 USD
+  approver: the requesting rep (refunds run on their behalf)
+  sees: charge id, amount, customer, reason text from the ticket
+  timeout: 15 min, then reject
+
+action: fetch
+  approver: on-call
+  sees: the full URL, including the query string
+  timeout: 5 min, then reject
+  skips gate: carrier tracking domains on the named allowlist
+    (owner: platform team, reviewed monthly)
+
+reads (inbox, channels, charges): no gate, logged</div>
+      </div>
+      <div class="step">
+        <p><strong>File it as page 5 of the access plan.</strong> It matches Halyard's agreed design: send email, refund, and fetch outside an allowlist of carrier tracking domains need a person's approval; reads run and are logged. Every decision a gate makes is a row session 6 will need.</p>
+        <div class="prompt-box good"><span class="label">★ Step 6 · access plan, page 5 of 6: gate rules</span>Gated (a person approves, sees the exact arguments):
+  send email, refund up to 200 USD, fetch outside the carrier allowlist
+Not gated: reads (inbox, channels, charges), allowlisted fetch
+Bench: rung 3 -&gt; rung 4 = 6 -&gt; 3 of 19, weighted 26 -&gt; 11
+  (constructed weights), 3 approvals, trifecta broken
+Not enough alone: gates on the day-one key = 6 of 19, 9 approvals
+Open question: revisit a design pattern if approvals get rubber-stamped
+Feeds session 6: every decision recorded with its approver</div>
+      </div>
+    </div>
+
+    <div class="callout tip">
+      <p><strong>Three is a good number of approvals.</strong> On rung 4 the gates ask about three kinds of call. On the trap they ask about nine and protect less. When you are tempted to add a gate, first ask whether a scope cut would remove the action instead.</p>
+    </div>
+  </section>
+
+  <section class="section" id="exercise">
+    <div class="section-kicker">
+      <span class="klabel">Homework</span>
+      <h2>Before session 6</h2>
+      <span class="tag exercise">30 min</span>
+    </div>
+    <ol>
+      <li><strong>Run the trifecta check on your own agent.</strong> List every tool and mark it private data, untrusted input or way out. If all three columns are filled, name the leg you will cut.</li>
+      <li><strong>Draft one approval prompt.</strong> For your riskiest write, write what the approver should see, argument by argument. Then check that none of it comes from the model's own summary.</li>
+      <li><strong>Write your allowlist.</strong> For each outbound tool, list the destinations that could skip the gate, who owns the list, and when it is reviewed.</li>
+      <li><strong>Pick your side, provisionally.</strong> In three sentences, say whether your agent should take a design pattern or gates first, and what evidence would make you switch.</li>
+    </ol>
+  </section>
+
+  <section class="section" id="quiz">
+    <div class="section-kicker">
+      <span class="klabel">Check yourself</span>
+      <h2>Three questions</h2>
+    </div>
+    <p>Clear all three and session 5 gets stamped in your passport.</p>
+
+    <div class="quiz-q" data-answer="2">
+      <p class="qtext">1 · Which leg of the lethal trifecta does Halyard's design cut, and why that one?</p>
+      <button class="qopt" type="button">A · Untrusted input, by no longer letting the agent read ticket bodies</button>
+      <button class="qopt" type="button">B · Private data, by removing the tickets tool's access to the support inbox</button>
+      <button class="qopt" type="button">C · The way out, by gating send email and fetch outside the allowlist, because reading tickets and private data is the agent's job</button>
+      <button class="qopt" type="button">D · None, because a guardrail with 95% detection makes the trifecta safe</button>
+      <p class="qwhy">Reading customer tickets and the inbox is what the agent is for, so A and B remove the agent. Gating the exit keeps the reads and breaks the path; the bench's trifecta flag flips from present to broken at rung 4. D is the argument Willison calls a failing grade.</p>
+    </div>
+
+    <div class="quiz-q" data-answer="3">
+      <p class="qtext">2 · A team skips scopes and the broker and puts gates on irreversible actions over the day-one shared key. What does the bench print, and what does it mean?</p>
+      <button class="qopt" type="button">A · 0 of 19, because every dangerous action now waits for a person</button>
+      <button class="qopt" type="button">B · 3 of 19 with 3 approvals, the same as rung 4</button>
+      <button class="qopt" type="button">C · 19 of 19, because gates do nothing without a broker</button>
+      <button class="qopt" type="button">D · 6 of 19, weighted 24, with 9 approvals: more prompts than rung 4 and more still leaking, because the broad key's reads and posts never pass a gate</button>
+      <p class="qwhy">The bench prints 6 of 19, weighted 24 (constructed weights), 9 approvals. Reads like the customer contact table and staff email addresses, and posting in any channel, are still reachable through the broad key. Gates sit on top of scopes; they do not replace them.</p>
+    </div>
+
+    <div class="quiz-q" data-answer="1">
+      <p class="qtext">3 · Which statement describes the design-patterns side and the approval-fatigue side fairly?</p>
+      <button class="qopt" type="button">A · Design patterns are proven better, so gates are obsolete</button>
+      <button class="qopt" type="button">B · Patterns constrain the agent after it reads untrusted input at a cost in utility and engineering; the fatigue side argues people approve what they are shown, so gates erode; neither is settled, and no primary measurement of fatigue was found</button>
+      <button class="qopt" type="button">C · Approval fatigue has been measured to make gates useless, so only patterns work</button>
+      <button class="qopt" type="button">D · The two sides agree that 95% detection is enough</button>
+      <p class="qwhy">The patterns paper and CaMeL report real utility costs (77% against 84% on AgentDojo for CaMeL). Approval fatigue is a practitioner argument with no primary measurement found. A and C each claim a winner the evidence does not support.</p>
+    </div>
+
+    <p class="quiz-score"></p>
+  </section>
+
+  <section class="section" id="official">
+    <div class="section-kicker">
+      <span class="klabel">Sources covered</span>
+      <h2>What this session teaches, and where it came from</h2>
+    </div>
+    <div class="covered">
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Simon Willison, "The lethal trifecta for AI agents", 2025-06-16 (read 2026-11-10)</span><span class="note">The three legs, exfiltration, the 95% failing grade, MCP mix-and-match, avoid the combination</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Beurer-Kellner et al. 2025, arXiv 2506.08837 (read 2026-11-10)</span><span class="note">Six patterns by name, the constrain-after-untrusted-input principle, utility trade-offs</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Debenedetti et al. 2025, CaMeL, arXiv 2503.18813 (abstract read 2026-11-10)</span><span class="note">Control and data flow from the trusted query, capabilities at tool calls, 77% against 84% on AgentDojo</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">OWASP LLM06:2025 Excessive Agency (read 2026-11-10)</span><span class="note">Excessive autonomy, require user approval, logging and rate limiting limit damage but do not prevent it</span></div>
+      <div class="covered-row"><span class="status pill light">◐</span><span class="name">OWASP Top 10 for Agentic Applications</span><span class="note">Release date December 9, 2025 read at source; the ten names are reported only, not reproduced</span></div>
+      <div class="covered-row"><span class="status pill light">◐</span><span class="name">Approval fatigue</span><span class="note">Contested practitioner argument; no primary measurement found; taught as a disagreement</span></div>
+      <div class="covered-row"><span class="status pill light">◐</span><span class="name">Bench numbers (6 / 26, 3 / 11, 6 / 24 with 9 approvals)</span><span class="note">Computed by a graph search in your browser on a constructed graph with constructed weights</span></div>
+      <div class="covered-row"><span class="status pill light">◐</span><span class="name">Halyard's gate rules, approvers and timeouts</span><span class="note">Constructed for teaching; no real company</span></div>
+    </div>
+    <p class="mono" style="margin-top:14px">Every fact on this page, and its verification tier, is recorded in the course's source map.</p>
+  </section>
+
+  <section class="cheat" id="cheatsheet">
+    <h3>Session 5 cheat sheet <span>· pin this</span></h3>
+    <div class="grid-2">
+      <div class="cheat-item"><b>The lethal trifecta</b><span>Private data, untrusted input, a way out. All three together is an exfiltration path.</span></div>
+      <div class="cheat-item"><b>Cut one leg on purpose</b><span>Halyard keeps reading, because it is the job, and gates the way out.</span></div>
+      <div class="cheat-item"><b>What to gate</b><span>Irreversible, high value, or crosses a trust boundary. Never plain reads.</span></div>
+      <div class="cheat-item"><b>Show the arguments</b><span>Recipient, amount, full URL. The model's summary was written by the model the attacker steers.</span></div>
+      <div class="cheat-item"><b>Gates sit on scopes</b><span>Rung 4: 3 of 19 with 3 approvals. Gates on the day-one key: 6 of 19 with 9.</span></div>
+      <div class="cheat-item"><b>The open argument</b><span>Patterns cost utility and engineering; gates cost attention. Neither is settled.</span></div>
+    </div>
+  </section>
+
+  <div class="callout next">
+    <span class="nx-pill">Next session</span>
+    <p>A gate that decides is only half the job; you also have to show afterwards what was decided, by whom, with which token. Session 6 designs the audit record, the kill switch and revocation, runs the whole bench ladder from 19 down to 2, and signs Halyard's access plan.</p>
+  </div>
+
+  <footer class="pagefoot">
+    <span>Session 5 of 6 · learn-agent-secrets-access-with-phoebe · by Phoebe Fu &nbsp;·&nbsp; 📚 <a href="https://phoebefu6.github.io/learn-with-phoebe/">Learn with Phoebe ↗</a></span>
+    <span><a href="04-keep-the-key-out.html">← Prev: Keep the key out of the context window</a> &nbsp;·&nbsp; <a href="06-prove-what-it-did.html">Next: Prove what it did, then sign the plan →</a></span>
+  </footer>
+
+</main>
+
+<script src="../assets/app.js?v=1"></script>
+<script src="../assets/asa-sample.js?v=1"></script>
+<script src="../assets/asa-live.js?v=3"></script>
+</body>
+</html>

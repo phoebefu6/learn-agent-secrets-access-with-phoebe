@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- social:start -->
+<meta name="description" content="Session 3 of 6. Give the key to the tool, not to the agent. One credential per tool, the read and write split, the real scope lists of Gmail, Slack and GitHub, expiry and audience on every token, and Halyard's blast radius cut tool by tool on a bench that searches the graph in your browser.">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Learn with Phoebe">
+<meta property="og:title" content="Scope the tool, not the agent - learn secrets and access for AI agents with phoebe">
+<meta property="og:description" content="Session 3 of 6. One key per tool, real scope lists read rung by rung, expiry and audience, and a blast radius cut tool by tool.">
+<meta property="og:url" content="https://phoebefu6.github.io/learn-agent-secrets-access-with-phoebe/courses/03-scope-the-tool.html">
+<meta property="og:image" content="https://phoebefu6.github.io/learn-agent-secrets-access-with-phoebe/assets/og-cover.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Scope the tool, not the agent - learn secrets and access for AI agents with phoebe">
+<meta name="twitter:description" content="Session 3 of 6. One key per tool, real scopes, expiry and audience, and a blast radius you cut tool by tool.">
+<meta name="twitter:image" content="https://phoebefu6.github.io/learn-agent-secrets-access-with-phoebe/assets/og-cover.png">
+<!-- social:end -->
+<title>Session 3 · Scope the tool, not the agent - learn secrets and access for AI agents with phoebe</title>
+<link rel="stylesheet" href="../assets/style.css?v=2">
+</head>
+<body>
+
+<div class="toolbar">
+  <div class="wrap">
+    <span class="crumb"><a href="../index.html">learn-agent-secrets-access-with-phoebe</a> / Session 3 of 6</span>
+    <button class="btn" id="toggle-all" type="button">Expand all</button>
+    <button class="btn primary" id="zoom-toggle" type="button">Projector zoom: off</button>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="wrap">
+    <div class="eyebrow">Learn Secrets &amp; Access for AI Agents with Phoebe · Session 3 of 6</div>
+    <h1>Scope the <span class="accent">tool</span>, not the agent</h1>
+    <p class="sub">An agent does not need permissions. Its tools do, and each tool needs only what its one job needs. Tonight we take the key away from the agent and give one to each tool, read the scope lists Gmail, Slack and GitHub actually publish to find the rung each tool should sit on, add the two fields most scope tables forget, expiry and audience, and then cut Halyard's blast radius tool by tool on the bench, watching which cut buys the most.</p>
+    <div class="chip-row">
+      <span class="chip level">🟡 Core</span>
+      <span class="chip audience">Builders and platform engineers</span>
+      <span class="chip audience">Real scope names, one scope table</span>
+      <span class="chip time">45 min</span>
+    </div>
+    <div class="agenda">
+      <span class="a1" style="flex:1">0-3 · Welcome</span>
+      <span class="a2" style="flex:4">3-18 · Per tool, real scopes, expiry and audience</span>
+      <span class="a3" style="flex:5">18-40 · Build-along: cut the scopes</span>
+      <span class="a4" style="flex:1">40-45 · Q&amp;A</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section class="section" id="intro">
+    <div class="section-kicker">
+      <span class="klabel">Part 0</span>
+      <h2>Where we start</h2>
+    </div>
+    <p class="lede">We stay with the constructed Halyard example: an invented logistics SaaS whose ops agent works five tools, tickets on a Gmail support inbox, warehouse, refunds, chat on Slack, and fetch. Session 1 counted the day-one blast radius at 19 of 19 sensitive actions. Session 2 decided whose authority each tool carries. Tonight decides how much of that authority each tool gets, written as real scope names, with an expiry and an audience on every token.</p>
+
+    <div class="legend">
+      <span class="pill">🎫 Clear all three quiz questions to stamp your passport</span>
+      <span class="pill">Live = presented in the 45 minutes</span>
+      <span class="pill">Self-study = the full depth, after class</span>
+      <span class="pill">★ Build-along = do it yourself</span>
+    </div>
+
+    <div class="callout win">
+      <p><strong>★ What you walk out with tonight.</strong> Page 3 of Halyard's agent access plan: a scope table with one row per tool, real Gmail and Slack scope names, the read and write split made explicit, and an expiry and an audience on every credential. Plus the habit of reading a provider's scope list from the coarse end down, and a blast radius cut from 15 to 6 that you watched fall one tool at a time.</p>
+    </div>
+  </section>
+
+  <section class="section" id="part-1">
+    <div class="section-kicker">
+      <span class="klabel">Part 1 · covers one credential per tool and the read and write split</span>
+      <h2>One credential per tool</h2>
+      <span class="tag concept">5 min live</span>
+    </div>
+    <p class="lede">When the agent holds the key, the key has to cover everything any tool might do, so every tool can do what the broadest one needs. Move the key one level down, to the tool, and its reach becomes that tool's job. Then split each tool's job into the part that reads and the part that writes, because those are two very different risks.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 366" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Two panels. Before: one agent-wide key fans out to all five tools, tickets, warehouse, refunds, chat and fetch, so each tool carries the union of every scope. After: each tool holds its own keys sized to its job. Tickets holds gmail.readonly as a read key and gmail.send as a write key. Warehouse holds only wh.read.aggregates, read. Refunds holds charges:read, read, and refunds:write:capped, write. Chat holds channels:history, read, and chat:write, write. Fetch holds no credential. Write keys are outlined in brass.">
+        <defs>
+          <filter id="k3aSk" x="-3%" y="-3%" width="106%" height="106%"><feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="2" seed="31" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="2.4" xChannelSelector="R" yChannelSelector="G"/></filter>
+          <pattern id="k3aHc" patternUnits="userSpaceOnUse" width="7" height="7" patternTransform="rotate(-38)"><line x1="0" y1="0" x2="0" y2="7" stroke="#B3832A" stroke-width="1" opacity=".5"/></pattern>
+          <marker id="k3aAr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M1 1 L9 5 L1 9" fill="none" stroke="#22141A" stroke-width="1.6" stroke-linecap="round"/></marker>
+        </defs>
+        <style>
+          .k3aH { font: 800 12px Inter, sans-serif; fill: #22141A; }
+          .k3aL { font: 600 12px Inter, sans-serif; fill: #22141A; }
+          .k3aS { font: 400 11px Inter, sans-serif; fill: #5E4A53; }
+          .k3aK { font: 700 11px Inter, sans-serif; fill: #5A400F; }
+          .k3aA { font: 700 11px Inter, sans-serif; fill: #2C0E1B; }
+          .k3aM { font: 600 11px ui-monospace, Menlo, monospace; fill: #22141A; }
+          .k3aN { font: 400 12px Inter, sans-serif; fill: #5E4A53; }
+        </style>
+
+        <text class="k3aH" x="30" y="24">GIVE THE KEY TO THE TOOL, NOT TO THE AGENT (CONSTRUCTED HALYARD)</text>
+
+        <g filter="url(#k3aSk)" fill="none" stroke="#22141A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="30" y="40" width="350" height="272" rx="12" transform="rotate(-0.3 205 176)" fill="#FFFFFF"/>
+          <rect x="400" y="40" width="450" height="272" rx="12" transform="rotate(0.3 625 176)" fill="#FFFFFF"/>
+          <rect x="46" y="150" width="150" height="68" rx="10" transform="rotate(-0.6 121 184)" fill="url(#k3aHc)"/>
+          <path d="M200 170 C222 160 222 96 242 92" marker-end="url(#k3aAr)"/>
+          <path d="M200 177 C222 170 222 142 242 138" marker-end="url(#k3aAr)"/>
+          <path d="M200 184 L242 184" marker-end="url(#k3aAr)"/>
+          <path d="M200 191 C222 198 222 226 242 230" marker-end="url(#k3aAr)"/>
+          <path d="M200 198 C222 208 222 272 242 276" marker-end="url(#k3aAr)"/>
+          <rect x="246" y="76" width="116" height="32" rx="8" fill="#FFFFFF"/>
+          <rect x="246" y="122" width="116" height="32" rx="8" fill="#FFFFFF"/>
+          <rect x="246" y="168" width="116" height="32" rx="8" fill="#FFFFFF"/>
+          <rect x="246" y="214" width="116" height="32" rx="8" fill="#FFFFFF"/>
+          <rect x="246" y="260" width="116" height="32" rx="8" fill="#FFFFFF"/>
+
+          <rect x="416" y="76" width="88" height="32" rx="8" fill="#F8EEF2"/>
+          <rect x="416" y="122" width="88" height="32" rx="8" fill="#F8EEF2"/>
+          <rect x="416" y="168" width="88" height="32" rx="8" fill="#F8EEF2"/>
+          <rect x="416" y="214" width="88" height="32" rx="8" fill="#F8EEF2"/>
+          <rect x="416" y="260" width="88" height="32" rx="8" fill="#F8EEF2"/>
+          <path d="M504 92 L520 92 M504 138 L520 138 M504 184 L520 184 M504 230 L520 230 M504 276 L520 276"/>
+          <rect x="520" y="76" width="156" height="32" rx="14" fill="#FFFFFF" stroke="#43192A"/>
+          <rect x="686" y="76" width="152" height="32" rx="14" fill="#FBF3E1" stroke="#B3832A"/>
+          <rect x="520" y="122" width="156" height="32" rx="14" fill="#FFFFFF" stroke="#43192A"/>
+          <rect x="520" y="168" width="156" height="32" rx="14" fill="#FFFFFF" stroke="#43192A"/>
+          <rect x="686" y="168" width="152" height="32" rx="14" fill="#FBF3E1" stroke="#B3832A"/>
+          <rect x="520" y="214" width="156" height="32" rx="14" fill="#FFFFFF" stroke="#43192A"/>
+          <rect x="686" y="214" width="152" height="32" rx="14" fill="#FBF3E1" stroke="#B3832A"/>
+          <rect x="520" y="260" width="156" height="32" rx="14" stroke="#D8C7CE" stroke-dasharray="5 5"/>
+        </g>
+
+        <text class="k3aA" x="46" y="62">BEFORE: ONE KEY FOR THE WHOLE AGENT</text>
+        <text class="k3aK" x="58" y="176">AGENT-WIDE KEY</text>
+        <text class="k3aS" x="58" y="194">every scope of every</text>
+        <text class="k3aS" x="58" y="208">tool, in one secret</text>
+        <text class="k3aL" x="258" y="96">tickets</text>
+        <text class="k3aL" x="258" y="142">warehouse</text>
+        <text class="k3aL" x="258" y="188">refunds</text>
+        <text class="k3aL" x="258" y="234">chat</text>
+        <text class="k3aL" x="258" y="280">fetch</text>
+
+        <text class="k3aA" x="416" y="62">AFTER: ONE KEY PER TOOL, SIZED TO ITS JOB</text>
+        <text class="k3aL" x="426" y="96">tickets</text>
+        <text class="k3aL" x="426" y="142">warehouse</text>
+        <text class="k3aL" x="426" y="188">refunds</text>
+        <text class="k3aL" x="426" y="234">chat</text>
+        <text class="k3aL" x="426" y="280">fetch</text>
+        <text class="k3aM" x="532" y="96">gmail.readonly</text>
+        <text class="k3aM" x="696" y="96">gmail.send</text>
+        <text class="k3aM" x="532" y="142">wh.read.aggregates</text>
+        <text class="k3aM" x="532" y="188">charges:read</text>
+        <text class="k3aM" x="696" y="188">refunds:write:capped</text>
+        <text class="k3aM" x="532" y="234">channels:history</text>
+        <text class="k3aM" x="696" y="234">chat:write</text>
+        <text class="k3aS" x="532" y="280">no credential</text>
+
+        <text class="k3aN" x="30" y="336">Before: the key's reach is the union of every tool's needs, and any tool can be steered to all of it.</text>
+        <text class="k3aN" x="30" y="354">After: each key is one tool's job. Revoke one and four keep running. Wine outline = read, brass = write.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - moving the key from the agent to the tool turns one big reach into five small ones, and splits each into a read half and a write half</figcaption>
+    </figure>
+
+    <details class="card" open>
+      <summary><span class="mode live">Live</span>Why the credential belongs to the tool<span class="mini">2 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p><strong>A key's reach becomes one tool's job.</strong> The agent is a router: it decides which tool to call. The tool is the thing that actually talks to Gmail or to payments. Put the credential on the tool and the question "what can this key do?" has a short answer you can read off the tool's purpose. The tickets tool reads and answers support mail; its key has no business touching payouts.</p>
+        <p><strong>You can revoke one without the rest.</strong> If the refunds tool's key leaks into a trace, you kill that key and the other four tools keep working. Session 1's shared key could not be revoked alone. Session 4 makes revocation fast; this session makes it narrow.</p>
+        <p><strong>It is the precondition for everything else.</strong> You cannot cut scopes on a key that five tools share, because the cut has to satisfy the greediest of them. Separate keys first, then cut each one.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>The read and write split, as OWASP LLM06 names it<span class="mini">2 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>OWASP's LLM06:2025 Excessive Agency names three root causes: excessive functionality, excessive permissions and excessive autonomy. Its example of excessive permissions is exactly this split: a tool with write or delete rights on a downstream system when it only needs to read.</p>
+        <p>Its worked scenario fits Halyard closely. An email-summary assistant uses a plugin that can read mail, but the plugin can also send. A poisoned email uses indirect prompt injection to make the assistant forward the inbox to the attacker. OWASP's fix has three parts: a read-only extension, a read-only OAuth scope, and the user approving each send.</p>
+        <p>Halyard's tickets tool genuinely has to send replies, so it cannot be read-only. That is why the figure draws its two keys separately: the read half (<code>gmail.readonly</code>) and the write half (<code>gmail.send</code>) carry different risks, and session 5 puts a person in front of the write half. Writing them as two lines in the scope table is what makes that possible.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>Bench preview: separate keys alone barely move the number<span class="mini">2 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>On the bench, switching Credentials from the shared key to "One per tool" and changing nothing else takes the headline from <strong>19 to 15</strong> sensitive actions reachable from a poisoned input, and the weighted blast radius from 121 to 90 (weights are constructed). GitHub drops out, because no tool's key reaches it any more.</p>
+        <p>But the shortest injected path still ends at <strong>change the payout bank account</strong>. Each tool now has its own key, yet each key is still its provider's broadest one, so the refunds tool can still do what the payments admin can do. One key per tool limits where a leak spreads; it does not limit what each key opens. That is Part 2's job, and the build-along's.</p>
+      </div>
+    </details>
+
+    <div class="callout example">
+      <span class="ex-pill">Real world</span>
+      <p><strong>OWASP's prevention list reads like a scope table.</strong> LLM06:2025 (read 2026-11-10) tells you to minimise extensions, minimise extension functionality and minimise extension permissions, and to avoid open-ended extensions where a narrow one would do. It also notes that logging, monitoring and rate limiting limit the damage but do not prevent it. Halyard's fetch tool is the open-ended one, and it holds no credential at all.</p>
+    </div>
+  </section>
+
+  <section class="section" id="part-2">
+    <div class="section-kicker">
+      <span class="klabel">Part 2 · covers fine-grained scopes from real scope lists</span>
+      <h2>Reading the real scope lists</h2>
+      <span class="tag concept">6 min live</span>
+    </div>
+    <p class="lede">"Least privilege" is easy to say and hard to type, because you can only grant what the provider lets you name. So read each provider's list from the coarse end down, and stop at the lowest rung that still does the job. Every provider draws its ladder differently, and some ladders have a rung missing exactly where you need one.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 350" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Three columns, one per provider, each a ladder from coarse at the top to fine at the bottom. Gmail: https://mail.google.com/, Restricted, including permanent delete; then gmail.modify, Restricted, no permanent delete; then gmail.readonly, Restricted, and gmail.send, Sensitive, where the tickets tool lands. Slack: admin, administer the workspace; then chat:write.public, post where never added; then chat:write and channels:history, where the chat tool lands. GitHub fine-grained token: Administration read and write; then Secrets read and write; then Contents read and Issues read; no Halyard tool needs GitHub. The top rung of each column is marked red as what day one held.">
+        <defs>
+          <filter id="k3bSk" x="-3%" y="-3%" width="106%" height="106%"><feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="2" seed="43" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="2.4" xChannelSelector="R" yChannelSelector="G"/></filter>
+          <pattern id="k3bHc" patternUnits="userSpaceOnUse" width="7" height="7" patternTransform="rotate(-38)"><line x1="0" y1="0" x2="0" y2="7" stroke="#B3832A" stroke-width="1" opacity=".5"/></pattern>
+          <marker id="k3bAr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M1 1 L9 5 L1 9" fill="none" stroke="#22141A" stroke-width="1.6" stroke-linecap="round"/></marker>
+        </defs>
+        <style>
+          .k3bH { font: 800 12px Inter, sans-serif; fill: #22141A; }
+          .k3bS { font: 400 11px Inter, sans-serif; fill: #5E4A53; }
+          .k3bK { font: 700 11px Inter, sans-serif; fill: #5A400F; }
+          .k3bA { font: 700 11px Inter, sans-serif; fill: #2C0E1B; }
+          .k3bM { font: 600 11px ui-monospace, Menlo, monospace; fill: #22141A; }
+          .k3bN { font: 400 12px Inter, sans-serif; fill: #5E4A53; }
+        </style>
+
+        <text class="k3bH" x="20" y="24">THREE REAL SCOPE LADDERS, COARSE AT THE TOP, AND WHERE HALYARD'S TOOLS LAND</text>
+
+        <g filter="url(#k3bSk)" fill="none" stroke="#22141A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="20" y="80" width="266" height="50" rx="8" transform="rotate(-0.4 153 105)" fill="#FEF2F2" stroke="#991B1B"/>
+          <path d="M153 133 L153 149" marker-end="url(#k3bAr)"/>
+          <rect x="20" y="152" width="266" height="50" rx="8" transform="rotate(0.3 153 177)" fill="#FFFFFF"/>
+          <path d="M153 205 L153 221" marker-end="url(#k3bAr)"/>
+          <rect x="20" y="224" width="128" height="50" rx="8" fill="url(#k3bHc)"/>
+          <rect x="158" y="224" width="128" height="50" rx="8" fill="url(#k3bHc)"/>
+
+          <rect x="307" y="80" width="266" height="50" rx="8" transform="rotate(0.4 440 105)" fill="#FEF2F2" stroke="#991B1B"/>
+          <path d="M440 133 L440 149" marker-end="url(#k3bAr)"/>
+          <rect x="307" y="152" width="266" height="50" rx="8" transform="rotate(-0.3 440 177)" fill="#FEF2F2" stroke="#991B1B"/>
+          <path d="M440 205 L440 221" marker-end="url(#k3bAr)"/>
+          <rect x="307" y="224" width="128" height="50" rx="8" fill="url(#k3bHc)"/>
+          <rect x="445" y="224" width="128" height="50" rx="8" fill="url(#k3bHc)"/>
+
+          <rect x="594" y="80" width="266" height="50" rx="8" transform="rotate(-0.3 727 105)" fill="#FEF2F2" stroke="#991B1B"/>
+          <path d="M727 133 L727 149" marker-end="url(#k3bAr)"/>
+          <rect x="594" y="152" width="266" height="50" rx="8" transform="rotate(0.4 727 177)" fill="#FEF2F2" stroke="#991B1B"/>
+          <path d="M727 205 L727 221" marker-end="url(#k3bAr)"/>
+          <rect x="594" y="224" width="128" height="50" rx="8" fill="#FFFFFF"/>
+          <rect x="732" y="224" width="128" height="50" rx="8" fill="#FFFFFF"/>
+        </g>
+
+        <text class="k3bH" x="20" y="52">GMAIL</text>
+        <text class="k3bS" x="20" y="68">Google's own class shown</text>
+        <text class="k3bH" x="307" y="52">SLACK</text>
+        <text class="k3bS" x="307" y="68">names from Slack's scope list</text>
+        <text class="k3bH" x="594" y="52">GITHUB FINE-GRAINED TOKEN</text>
+        <text class="k3bS" x="594" y="68">a permission at read, or read and write</text>
+
+        <text class="k3bM" x="32" y="100">https://mail.google.com/</text>
+        <text class="k3bS" x="32" y="118">Restricted, incl. permanent delete</text>
+        <text class="k3bM" x="32" y="172">.../auth/gmail.modify</text>
+        <text class="k3bS" x="32" y="190">Restricted; no permanent delete</text>
+        <text class="k3bM" x="30" y="244">gmail.readonly</text>
+        <text class="k3bS" x="30" y="262">Restricted</text>
+        <text class="k3bM" x="168" y="244">gmail.send</text>
+        <text class="k3bS" x="168" y="262">Sensitive</text>
+        <text class="k3bK" x="20" y="294">tickets tool: both, nothing above</text>
+
+        <text class="k3bM" x="319" y="100">admin</text>
+        <text class="k3bS" x="319" y="118">administer the workspace</text>
+        <text class="k3bM" x="319" y="172">chat:write.public</text>
+        <text class="k3bS" x="319" y="190">post where it was never added</text>
+        <text class="k3bM" x="317" y="244">chat:write</text>
+        <text class="k3bS" x="317" y="262">post where added</text>
+        <text class="k3bM" x="455" y="244">channels:history</text>
+        <text class="k3bS" x="455" y="262">read where added</text>
+        <text class="k3bK" x="307" y="294">chat tool: both, nothing above</text>
+
+        <text class="k3bM" x="606" y="100">Administration: read and write</text>
+        <text class="k3bS" x="606" y="118">settings, delete the repository</text>
+        <text class="k3bM" x="606" y="172">Secrets: read and write</text>
+        <text class="k3bS" x="606" y="190">overwrite Actions secrets</text>
+        <text class="k3bM" x="604" y="244">Contents: read</text>
+        <text class="k3bS" x="604" y="262">files, commits</text>
+        <text class="k3bM" x="742" y="244">Issues: read</text>
+        <text class="k3bS" x="742" y="262">issues, comments</text>
+        <text class="k3bA" x="594" y="294">no tool needs GitHub: issue no key</text>
+
+        <text class="k3bN" x="20" y="320">Names are real, read at source 2026-11-10. Red = what day one held. Brass = where Halyard's tools land.</text>
+        <text class="k3bN" x="20" y="338">gmail.send cannot name the recipients: the scope sets the verb, not who receives it. Session 5 gates it.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - each provider's ladder has a rung that fits Halyard's tool, but only if you read down past the admin scope that the quickstart hands you</figcaption>
+    </figure>
+
+    <div class="asa-scopes" data-provider="slack"></div>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>Google: Gmail scopes come with Google's own risk class<span class="mini">2 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Google's Gmail scope page (read 2026-11-10) tags each scope with its own class. <code>https://mail.google.com/</code> is full Gmail, including permanent delete that bypasses the trash: <strong>Restricted</strong>. <code>gmail.modify</code> reads, composes and sends but cannot permanently delete: Restricted. <code>gmail.readonly</code> reads messages and settings: Restricted. <code>gmail.send</code> sends only: <strong>Sensitive</strong>. Drive has a <strong>Non-sensitive</strong> rung, <code>drive.file</code>, limited to files the user opens with or shares to the app.</p>
+        <p>Two things are worth noticing. Reading mail is classed higher than sending it: a read scope exposes everything already in the inbox. And Google's master scope list advises choosing non-sensitive scopes where possible, noting that sensitive scopes require Google's review. The Calendar scope page states no class at all, so for Calendar you judge the rung yourself.</p>
+        <p>Halyard's tickets tool lands on <code>gmail.readonly</code> plus <code>gmail.send</code>: one Restricted and one Sensitive scope, instead of one Restricted scope that can delete the inbox.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>Slack: the difference between chat:write and chat:write.public<span class="mini">2 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>In Slack's scope reference, <code>chat:write</code> sends messages as the app, in conversations it has been added to. <code>chat:write.public</code> adds the ability to send to public channels the app is not a member of. That one suffix is the difference between "the agent posts in #ops-alerts, where you put it" and "the agent posts in #finance, or anywhere else a poisoned ticket names".</p>
+        <p>Two more to look for when you inherit a Slack app. <code>users:read.email</code> exposes every person's email address in the workspace, a ready-made target list for a phishing run. <code>admin</code> administers the workspace. Halyard's chat tool needs <code>channels:history</code> to read the channels it was added to and <code>chat:write</code> to post there. Nothing else.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>GitHub: one permission name, two levels<span class="mini">2 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>GitHub's fine-grained personal access tokens grant each permission at one of two levels, read or read and write, and write includes read. The permissions page lists 76 names: 32 for a repository, 30 for an organization and 14 for an account. Each REST endpoint is mapped to the level it needs, for example reading a file needs Contents (read) and creating an issue needs Issues (write).</p>
+        <p>The ladder here is not a chain of nested scopes; it is a grid. You pick the names, then the level for each. The dangerous cells are easy to spot once you look: Administration write can delete or rename a repository, Secrets write can overwrite the Actions secrets a pipeline trusts. For Halyard the right answer is simpler still. No tool needs GitHub, so the right token is no token, which is what one key per tool gave us for free.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>Stripe's restricted keys, the model for Halyard's payments scopes<span class="mini">2 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Stripe's restricted API keys page (read 2026-11-10) shows a clean shape. A restricted key starts <code>rk_live_</code> or <code>rk_test_</code>; a full secret key starts <code>sk_</code> and opens everything. On a restricted key every resource is set to None, Read or Write, the default is None, and Write implies Read. GET calls need Read; POST and DELETE need Write. Stripe recommends restricted keys over secret keys, especially for AI agents, with one restricted key per service.</p>
+        <p>Halyard's payments scope names are constructed on that shape, so treat them as a design, not a vendor's list: <code>charges:read</code>, <code>refunds:write:capped</code> (refunds up to 200 USD), <code>refunds:write</code> (any amount) and <code>payouts:admin</code> (including the payout bank account). The refunds tool gets the first two. The exact Stripe label for its refunds permission was not confirmed at source, so check your own provider's list before copying a name.</p>
+      </div>
+    </details>
+
+    <div class="callout tip">
+      <p><strong>The honest gap: <code>gmail.send</code> cannot restrict recipients.</strong> Gmail has no scope for "send only to the customer who wrote in". The scope picks the verb; it cannot pick who receives the mail. So the cut tickets tool can still send a reply to any address a poisoned ticket names, and the bench will show exactly that as the last path left. When the ladder runs out of rungs, the next control is a person, and that is session 5.</p>
+    </div>
+  </section>
+
+  <section class="section" id="part-3">
+    <div class="section-kicker">
+      <span class="klabel">Part 3 · covers expiry and audience</span>
+      <h2>Expiry and audience: a scope also has a when and a where</h2>
+      <span class="tag concept">4 min live</span>
+    </div>
+    <p class="lede">A scope says what a token may do. It says nothing about until when, or at which server. A narrow scope on a token that never expires and is accepted everywhere is still a good find for an attacker. Two more fields close that: an expiry, so a stolen copy goes stale, and an audience, so a copy presented anywhere else is refused.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 306" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="An access token drawn as a card with three fields: scope gmail.readonly gmail.send, expiry 10:15, fifteen minutes after issue at 10:00, and audience https://mcp.halyard.example/tickets. Three uses go right. At 10:05 to the tickets MCP server: audience matches and not expired, served. At 10:40 to the tickets server, in red: rejected, token expired at 10:15. At 10:05 to the warehouse MCP server, in red: rejected, the audience names another server.">
+        <defs>
+          <filter id="k3cSk" x="-3%" y="-3%" width="106%" height="106%"><feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="2" seed="57" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="2.4" xChannelSelector="R" yChannelSelector="G"/></filter>
+          <pattern id="k3cHc" patternUnits="userSpaceOnUse" width="7" height="7" patternTransform="rotate(-38)"><line x1="0" y1="0" x2="0" y2="7" stroke="#B3832A" stroke-width="1" opacity=".5"/></pattern>
+          <marker id="k3cAr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M1 1 L9 5 L1 9" fill="none" stroke="#22141A" stroke-width="1.6" stroke-linecap="round"/></marker>
+          <marker id="k3cAd" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M1 1 L9 5 L1 9" fill="none" stroke="#991B1B" stroke-width="1.6" stroke-linecap="round"/></marker>
+        </defs>
+        <style>
+          .k3cH { font: 800 12px Inter, sans-serif; fill: #22141A; }
+          .k3cL { font: 600 12px Inter, sans-serif; fill: #22141A; }
+          .k3cS { font: 400 11px Inter, sans-serif; fill: #5E4A53; }
+          .k3cK { font: 700 11px Inter, sans-serif; fill: #5A400F; }
+          .k3cR { font: 800 11px Inter, sans-serif; fill: #991B1B; }
+          .k3cA { font: 700 11px Inter, sans-serif; fill: #2C0E1B; }
+          .k3cM { font: 600 11px ui-monospace, Menlo, monospace; fill: #22141A; }
+          .k3cN { font: 400 12px Inter, sans-serif; fill: #5E4A53; }
+        </style>
+
+        <text class="k3cH" x="30" y="24">A SCOPE ALSO HAS A WHEN AND A WHERE: ONE TOKEN, THREE USES (CONSTRUCTED VALUES)</text>
+
+        <g filter="url(#k3cSk)" fill="none" stroke="#22141A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="30" y="52" width="280" height="196" rx="12" transform="rotate(-0.5 170 150)" fill="#F8EEF2" stroke="#43192A"/>
+          <path d="M314 88 L556 88" marker-end="url(#k3cAr)"/>
+          <path d="M314 158 L556 158" stroke="#991B1B" marker-end="url(#k3cAd)"/>
+          <path d="M314 228 L556 228" stroke="#991B1B" marker-end="url(#k3cAd)"/>
+          <rect x="560" y="60" width="290" height="56" rx="10" transform="rotate(0.4 705 88)" fill="#FBF3E1" stroke="#B3832A"/>
+          <rect x="560" y="130" width="290" height="56" rx="10" transform="rotate(-0.4 705 158)" fill="#FEF2F2" stroke="#991B1B"/>
+          <rect x="560" y="200" width="290" height="56" rx="10" transform="rotate(0.3 705 228)" fill="#FEF2F2" stroke="#991B1B"/>
+        </g>
+
+        <text class="k3cA" x="46" y="76">ACCESS TOKEN, ISSUED 10:00</text>
+        <text class="k3cK" x="46" y="102">SCOPE</text>
+        <text class="k3cM" x="46" y="120">gmail.readonly gmail.send</text>
+        <text class="k3cK" x="46" y="150">EXP</text>
+        <text class="k3cM" x="46" y="168">10:15 (15 minutes)</text>
+        <text class="k3cK" x="46" y="198">AUD</text>
+        <text class="k3cM" x="46" y="216">https://mcp.halyard.example/tickets</text>
+        <text class="k3cS" x="46" y="236">what, until when, at which server</text>
+
+        <text class="k3cS" x="330" y="80">10:05, to the tickets server</text>
+        <text class="k3cR" x="330" y="150">10:40, to the tickets server</text>
+        <text class="k3cR" x="330" y="220">10:05, to the warehouse server</text>
+
+        <text class="k3cL" x="576" y="84">tickets MCP server</text>
+        <text class="k3cK" x="576" y="102">aud matches, not expired: served</text>
+        <text class="k3cL" x="576" y="154">tickets MCP server</text>
+        <text class="k3cR" x="576" y="172">rejected: token expired at 10:15</text>
+        <text class="k3cL" x="576" y="224">warehouse MCP server</text>
+        <text class="k3cR" x="576" y="242">rejected: aud names another server</text>
+
+        <text class="k3cN" x="30" y="278">Scope says what, exp says until when, aud says at which server. A stolen copy fails on the last two.</text>
+        <text class="k3cN" x="30" y="296">The times and URI are constructed; the audience check is RFC 8707's, and MCP servers must perform it.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - the same narrow token is refused when it is late and refused when it is in the wrong place</figcaption>
+    </figure>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>Audience: RFC 8707's resource parameter<span class="mini">2 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>RFC 8707, Resource Indicators for OAuth 2.0 (February 2020), adds a <code>resource</code> parameter to the token request. It tells the authorization server which protected resource the client means to use the token with. The value must be an absolute URI and must not contain a fragment. The authorization server should then audience-restrict the token, for example with an <code>aud</code> claim in a JWT, so the token fails at any other resource.</p>
+        <p>If the resource is invalid, unknown, malformed, or does not fit the requested scopes, the server answers <code>invalid_target</code>. The MCP authorization specification (revision 2026-07-28) makes this mandatory for MCP: clients must send <code>resource</code> set to the MCP server's canonical URI, and servers must check that a token was issued for them. Session 4 builds the broker that does this on Halyard's behalf.</p>
+        <p>What it prevents, concretely: a token minted for the tickets server, copied out of a trace or replayed by a malicious server, is refused by the warehouse server, because its <code>aud</code> names someone else.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>MCP's scope minimisation guidance<span class="mini">2 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>The MCP Security Best Practices page (2026-07-28 docs) has a section on scope minimisation. It warns against wildcard or omnibus scopes such as <code>*</code>, <code>all</code> or <code>full-access</code>, and suggests starting with a minimal initial scope, its example is <code>mcp:tools-basic</code>, then elevating step by step when a tool actually needs more.</p>
+        <p>The authorization specification gives that step-up a shape: a server that receives a token with too little scope answers <code>403</code> with <code>error="insufficient_scope"</code>, should say in <code>WWW-Authenticate</code> which scope it wants, and the client asks again for the union. A scope table plus step-up means the agent starts every run on the low rungs and climbs only when a call demands it, visibly.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>Expiry in practice: one example from Vault<span class="mini">1 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Expiry is easiest when the system issuing the credential sets it. In HashiCorp Vault every dynamic secret has a lease with a TTL, and its database secrets tutorial configures a role with <code>default_ttl=1h</code> and <code>max_ttl=24h</code>. That is one way to get expiry; session 4 goes deep on leases, short-lived tokens and the broker. For the scope table tonight, the point is only that every row gets an expiry, and fifteen minutes is the constructed value Halyard writes down.</p>
+      </div>
+    </details>
+
+    <div class="callout tip">
+      <p><strong>Two neighbours, two different questions.</strong> The warehouse role behind <code>wh.read.aggregates</code> is a warehouse design question, taught in <a href="https://phoebefu6.github.io/learn-data-access-control-with-phoebe/courses/b2-role-hierarchy.html">learn-data-access-control, role hierarchy</a>. And which documents a retrieval step may read for a given user is a read filter, taught in <a href="https://phoebefu6.github.io/learn-ship-internal-ai-assistant-with-phoebe/courses/b5-permissions-inside-retrieval.html">learn-ship-internal-ai-assistant, permissions inside retrieval</a>. Here we scope actions: which calls a tool's credential lets it make.</p>
+    </div>
+  </section>
+
+  <section class="section" id="demo-3">
+    <div class="section-kicker">
+      <span class="klabel">Build-along</span>
+      <h2>Cut Halyard's scopes tool by tool</h2>
+      <span class="tag demo">★ 22 min · everyone builds</span>
+    </div>
+    <p class="lede">The bench starts on rung 1: one credential per tool, each still its provider's broadest. You will cut one tool at a time to the rung from Part 2 and write down what the graph search prints after each cut, so you can see which tool was carrying the most risk. Then you write page 3 of the access plan. All numbers are computed on the constructed Halyard graph, with constructed weights.</p>
+
+    <div class="asa-bench" data-preset="r1" data-percut="1" data-title="Halyard blast-radius bench: cut the scopes"></div>
+
+    <div class="steps">
+      <div class="step">
+        <p><strong>Read rung 1 before touching anything.</strong> The bench prints <strong>15 of 19 sensitive actions</strong> reachable from a poisoned input with no human in the way, a <strong>weighted blast radius of 90</strong> (constructed weights), and a stolen key reaching 14. The shortest injected path still ends at change the payout bank account. Separate keys, same reach.</p>
+        <div class="prompt-box good"><span class="label">★ Step 1 · starting line</span>Rung 1, one key per tool, nothing cut:
+15 of 19 reachable, weighted 90, stolen key reaches 14.
+Worst path: ticket -&gt; agent -&gt; refunds tool -&gt;
+change the payout bank account.</div>
+      </div>
+      <div class="step">
+        <p><strong>Tick "Cut the refunds tool to its job".</strong> The refunds key drops from the payments admin rung to <code>charges:read</code> plus <code>refunds:write:capped</code>. The bench prints <strong>13</strong>, weighted <strong>72</strong>. Only two actions left the list, but they were heavy ones, which is why the weighted number falls faster than the count.</p>
+        <div class="prompt-box good"><span class="label">★ Step 2 · after refunds</span>cut refunds        13 of 19   weighted 72</div>
+      </div>
+      <div class="step">
+        <p><strong>Also tick the warehouse tool.</strong> Its key drops from <code>wh.admin</code> to <code>wh.read.aggregates</code>: no customer table, no export. The bench prints <strong>10</strong>, weighted <strong>48</strong>.</p>
+        <div class="prompt-box good"><span class="label">★ Step 3 · after warehouse</span>+ cut warehouse    10 of 19   weighted 48</div>
+      </div>
+      <div class="step">
+        <p><strong>Also tick the chat tool.</strong> From <code>admin</code>, <code>chat:write.public</code> and <code>users:read.email</code> down to <code>channels:history</code> plus <code>chat:write</code>. The bench prints <strong>7</strong>, weighted <strong>33</strong>.</p>
+        <div class="prompt-box good"><span class="label">★ Step 4 · after chat</span>+ cut chat          7 of 19   weighted 33</div>
+      </div>
+      <div class="step">
+        <p><strong>Finally tick the tickets tool.</strong> From <code>https://mail.google.com/</code> down to <code>gmail.readonly</code> plus <code>gmail.send</code>. The bench prints <strong>6</strong>, weighted <strong>26</strong>, the same numbers as the rung 2 preset. Read the path now: it ends at <strong>send email to any address</strong>. That is Part 2's honest gap showing up in the graph. No scope cut removes it, and session 5 puts a person in front of it.</p>
+        <div class="prompt-box good"><span class="label">★ Step 5 · after tickets</span>+ cut tickets       6 of 19   weighted 26
+Path left: ticket -&gt; agent -&gt; tickets tool -&gt;
+send email to any address. Owner: session 5 (gate).</div>
+      </div>
+      <div class="step">
+        <p><strong>Break it: tick "The warehouse tool keeps its admin role".</strong> This is the omnibus scope coming back, the way it usually does, "just for a dashboard". Watch the headline and the weighted number rise as the warehouse's customer data comes back into reach. Then untick it. The lesson is not the number; it is that one role can undo a cut without anyone touching the agent.</p>
+      </div>
+      <div class="step">
+        <p><strong>Write page 3 of the access plan: the scope table.</strong> One row per tool, the identity from session 2, the scopes from tonight, and the two columns from Part 3. Expiry and audience values are constructed; the audience is each tool's MCP server URI.</p>
+        <div class="prompt-box good"><span class="label">★ Step 7 · scope table, page 3 of the access plan</span>tool       runs as          scopes
+tickets    agent identity   gmail.readonly + gmail.send
+           exp 15 min       aud https://mcp.halyard.example/tickets
+chat       agent identity   channels:history + chat:write
+           exp 15 min       aud https://mcp.halyard.example/chat
+warehouse  agent identity   wh.read.aggregates
+           exp 15 min       aud https://mcp.halyard.example/warehouse
+refunds    rep, on behalf   charges:read + refunds:write:capped
+           (token exchange) aud https://mcp.halyard.example/refunds
+           exp 15 min
+fetch      no credential    none
+Never granted: https://mail.google.com/, gmail.modify,
+chat:write.public, users:read.email, admin, wh.read.customers,
+wh.admin, refunds:write, payouts:admin, any GitHub permission.
+Bench: 15 -&gt; 6 of 19, weighted 90 -&gt; 26 (constructed).
+Open item: gmail.send reaches any address -&gt; session 5.</div>
+      </div>
+    </div>
+
+    <div class="callout tip">
+      <p><strong>Write the "never granted" line, not just the granted ones.</strong> A scope table that lists only what each tool has is easy to drift from: someone adds a scope and the table still looks right. A short list of what no tool may hold gives the weekly review something to diff against, and session 6 uses exactly that check.</p>
+    </div>
+  </section>
+
+  <section class="section" id="exercise">
+    <div class="section-kicker">
+      <span class="klabel">Homework</span>
+      <h2>Before session 4</h2>
+      <span class="tag exercise">30 min</span>
+    </div>
+    <ol>
+      <li><strong>Split your agent's key by tool.</strong> For your own agent, list each tool and the credential it would hold on its own. Mark any tool that needs no credential at all.</li>
+      <li><strong>Read one provider's list from the top.</strong> Pick one tool, open its provider's real scope list, and write the rungs from coarse to fine. Circle the lowest rung that still does the job.</li>
+      <li><strong>Find one honest gap.</strong> For one write scope, write what it cannot restrict (recipients, amounts, channels). That gap is a candidate for a gate in session 5.</li>
+      <li><strong>Add expiry and audience.</strong> For each row of your scope table, write how long the credential lives today and which server would reject it if it were replayed. "Never" and "none" are honest answers; write them down.</li>
+    </ol>
+  </section>
+
+  <section class="section" id="quiz">
+    <div class="section-kicker">
+      <span class="klabel">Check yourself</span>
+      <h2>Three questions</h2>
+    </div>
+    <p>Clear all three and session 3 gets stamped in your passport.</p>
+
+    <div class="quiz-q" data-answer="2">
+      <p class="qtext">1 · Halyard moves from one shared key to one credential per tool, changing nothing else. What does the bench print?</p>
+      <button class="qopt" type="button">A · 0 of 19, because no tool shares a key any more</button>
+      <button class="qopt" type="button">B · 6 of 19, the same as cutting every scope</button>
+      <button class="qopt" type="button">C · 15 of 19, and the payout bank account is still reachable</button>
+      <button class="qopt" type="button">D · 19 of 19, because separate keys change nothing at all</button>
+      <p class="qwhy">Separate keys take the headline from 19 to 15 and remove GitHub, because no tool's key reaches it. But each tool still holds its provider's broadest key, so the refunds tool can still change the payout bank account. Separate keys limit where a leak spreads; scopes limit what each key opens. D overstates it: GitHub does drop out.</p>
+    </div>
+
+    <div class="quiz-q" data-answer="1">
+      <p class="qtext">2 · The tickets tool must send replies to customers. Which real Gmail scope lets it send, and nothing more?</p>
+      <button class="qopt" type="button">A · https://mail.google.com/, because it covers sending</button>
+      <button class="qopt" type="button">B · gmail.send</button>
+      <button class="qopt" type="button">C · gmail.modify, because it cannot permanently delete</button>
+      <button class="qopt" type="button">D · gmail.readonly</button>
+      <p class="qwhy">gmail.send sends only, and Google classes it Sensitive. https://mail.google.com/ is full Gmail including permanent delete that bypasses the trash. gmail.modify cannot permanently delete, but it also reads and changes the whole mailbox, far more than sending. gmail.readonly cannot send at all; Halyard pairs it with gmail.send for the reading half.</p>
+    </div>
+
+    <div class="quiz-q" data-answer="3">
+      <p class="qtext">3 · Halyard's tickets token carries aud = https://mcp.halyard.example/tickets. What does the audience check prevent?</p>
+      <button class="qopt" type="button">A · The tickets tool sending email to an attacker's address</button>
+      <button class="qopt" type="button">B · The token being used after its fifteen minutes run out</button>
+      <button class="qopt" type="button">C · A poisoned ticket steering the agent to call the tickets tool</button>
+      <button class="qopt" type="button">D · A copy of the token being accepted by any other server, such as the warehouse server</button>
+      <p class="qwhy">RFC 8707's resource parameter lets the authorization server bind the token to one resource, so any other resource refuses it. B is expiry, a separate field. A is the recipient gap that no Gmail scope closes. C is injection steering the agent to a tool it is allowed to call; audience does not stop that, gates do.</p>
+    </div>
+
+    <p class="quiz-score"></p>
+  </section>
+
+  <section class="section" id="official">
+    <div class="section-kicker">
+      <span class="klabel">Sources covered</span>
+      <h2>What this session teaches, and where it came from</h2>
+    </div>
+    <div class="covered">
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">GitHub fine-grained PAT permissions (read 2026-11-10)</span><span class="note">Read or read and write per permission, write includes read, 76 names</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Slack OAuth scopes reference (read 2026-11-10)</span><span class="note">chat:write against chat:write.public, channels:history, users:read.email, admin</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Google Workspace OAuth scopes, Gmail and Drive classes (read 2026-11-10)</span><span class="note">gmail.send Sensitive, gmail.readonly and https://mail.google.com/ Restricted, drive.file Non-sensitive; Calendar page states no class</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Stripe restricted API keys (read 2026-11-10)</span><span class="note">rk_ against sk_, None, Read or Write per resource; the shape behind Halyard's constructed payments scopes</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">OWASP LLM06:2025 Excessive Agency (read 2026-11-10)</span><span class="note">Excessive permissions, the email-summary example and its fix, the prevention list</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">RFC 8707 Resource Indicators for OAuth 2.0 (read 2026-11-10)</span><span class="note">resource parameter, absolute URI without fragment, audience restriction, invalid_target</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">MCP Security Best Practices, scope minimisation (read 2026-11-10)</span><span class="note">No omnibus scopes, minimal initial scope, step-up on 403 insufficient_scope</span></div>
+      <div class="covered-row"><span class="status pill light">◐</span><span class="name">Bench numbers (15, 90, 13, 72, 10, 48, 7, 33, 6, 26)</span><span class="note">Computed by a graph search in your browser on a constructed graph with constructed weights</span></div>
+      <div class="covered-row"><span class="status pill light">◐</span><span class="name">Halyard, its tools, warehouse and payments scope names, expiry and audience values</span><span class="note">Constructed for teaching; no real company</span></div>
+    </div>
+    <p class="mono" style="margin-top:14px">Every fact on this page, and its verification tier, is recorded in the course's source map.</p>
+  </section>
+
+  <section class="cheat" id="cheatsheet">
+    <h3>Session 3 cheat sheet <span>· pin this</span></h3>
+    <div class="grid-2">
+      <div class="cheat-item"><b>Key to the tool</b><span>One credential per tool: its reach is one job, and it can be revoked alone.</span></div>
+      <div class="cheat-item"><b>Separate is not small</b><span>One key per tool alone: 19 to 15, payout account still reachable.</span></div>
+      <div class="cheat-item"><b>Split read from write</b><span>Two lines per tool. The write half is where session 5's gate goes.</span></div>
+      <div class="cheat-item"><b>Read the ladder down</b><span>Start at the admin scope and stop at the lowest rung that still does the job.</span></div>
+      <div class="cheat-item"><b>When and where</b><span>Every row gets an expiry and an audience, the tool's own MCP server URI.</span></div>
+      <div class="cheat-item"><b>Halyard after the cuts</b><span>6 of 19, weighted 26. Last path: send email to any address.</span></div>
+    </div>
+  </section>
+
+  <div class="callout next">
+    <span class="nx-pill">Next session</span>
+    <p>Every tool now holds a small key. Next we make sure the model never sees it. Session 4 keeps the key out of the context window: a broker that attaches each key at call time, audience-bound and short-lived, redacted traces, and no token passthrough, and the bench shows a stolen key's reach falling to zero.</p>
+  </div>
+
+  <footer class="pagefoot">
+    <span>Session 3 of 6 · learn-agent-secrets-access-with-phoebe · by Phoebe Fu &nbsp;·&nbsp; 📚 <a href="https://phoebefu6.github.io/learn-with-phoebe/">Learn with Phoebe ↗</a></span>
+    <span><a href="02-whose-authority.html">← Prev: Whose authority</a> &nbsp;·&nbsp; <a href="04-keep-the-key-out.html">Next: Keep the key out of the context window →</a></span>
+  </footer>
+
+</main>
+
+<script src="../assets/app.js?v=1"></script>
+<script src="../assets/asa-sample.js?v=1"></script>
+<script src="../assets/asa-live.js?v=3"></script>
+</body>
+</html>

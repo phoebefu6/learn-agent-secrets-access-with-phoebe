@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- social:start -->
+<meta name="description" content="Six sessions for builders and platform engineers wiring an AI agent to real systems: give the agent its own identity, decide whose authority each call carries, scope every tool, keep keys out of the context window, gate what cannot be undone, and prove what it did. A blast-radius bench searches the graph in your browser. Free, by Phoebe Fu.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Learn with Phoebe">
+<meta property="og:title" content="Learn Secrets &amp; Access for AI Agents with Phoebe">
+<meta property="og:description" content="What you hand a model you would not hand a stranger: identity, scopes, brokers, gates and audit for AI agents, with a blast radius you can count.">
+<meta property="og:url" content="https://phoebefu6.github.io/learn-agent-secrets-access-with-phoebe/">
+<meta property="og:image" content="https://phoebefu6.github.io/learn-agent-secrets-access-with-phoebe/assets/og-cover.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Learn Secrets &amp; Access for AI Agents with Phoebe">
+<meta name="twitter:description" content="Identity, scopes, brokers, gates and audit for AI agents, with a blast radius you can count.">
+<meta name="twitter:image" content="https://phoebefu6.github.io/learn-agent-secrets-access-with-phoebe/assets/og-cover.png">
+<!-- social:end -->
+<title>Learn Secrets &amp; Access for AI Agents with Phoebe</title>
+<link rel="stylesheet" href="assets/style.css?v=2">
+<style>
+
+  .stats-row { display: flex; gap: 2.4rem; margin-top: 1.5rem; flex-wrap: wrap; }
+  .stat b { display: block; font-size: 2.1rem; font-weight: 800; line-height: 1.05; font-variant-numeric: tabular-nums; }
+  .stat span { font-size: .72rem; opacity: 1; text-transform: uppercase; letter-spacing: .09em; font-weight: 600; }
+
+  .course-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); gap: 1rem; margin-top: 1.5rem; }
+  .course-card {
+    border: 1px solid var(--hairline);
+    border-top: 4px solid var(--diff, var(--indigo));
+    border-radius: var(--radius);
+    padding: 1.2rem 1.3rem 1.1rem;
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+    text-decoration: none;
+    color: var(--ink);
+    background: #fff;
+    transition: box-shadow .15s ease, border-color .15s ease, transform .15s ease;
+    position: relative;
+  }
+  .course-card:hover { border-color: var(--indigo-soft); border-top-color: var(--diff, var(--indigo)); box-shadow: 0 8px 28px rgba(var(--shadow-rgb),.16); transform: translateY(-3px); }
+  .course-card .cicon { font-size: 1.7rem; line-height: 1; }
+  .course-card .cnum { font-size: .72rem; font-weight: 700; color: var(--indigo-mid); text-transform: uppercase; letter-spacing: .1em; }
+  .course-card h3 { font-size: 1.05rem; font-weight: 800; line-height: 1.3; }
+  .course-card p { font-size: .85rem; color: var(--muted); flex: 1; }
+  .course-card .meta { display: flex; gap: .4rem; flex-wrap: wrap; }
+
+  .diff-legend { display: flex; gap: 1rem; margin-top: 1.6rem; font-size: .74rem; color: var(--muted); font-weight: 600; flex-wrap: wrap; }
+  .diff-legend i { display: inline-block; width: .85rem; height: .35rem; border-radius: 999px; margin-right: .35rem; vertical-align: middle; }
+
+  .paths { margin-top: 2.6rem; }
+  .paths h2 { font-size: 1.3rem; font-weight: 800; margin-bottom: .3rem; }
+  .paths .plede { color: var(--muted); font-size: .92rem; margin-bottom: .8rem; }
+  .path { display: flex; gap: .55rem; align-items: center; padding: .75rem 0; border-bottom: .5px solid var(--hairline); flex-wrap: wrap; }
+  .path:last-child { border-bottom: none; }
+  .path b { min-width: 15.5rem; font-size: .9rem; }
+  .path .pstep { background: var(--indigo-50); color: var(--indigo-deep); border-radius: 999px; padding: .16rem .68rem; font-weight: 700; font-size: .8rem; text-decoration: none; transition: all .12s ease; }
+  .path .pstep:hover { background: var(--indigo); color: #fff; }
+  .path .parr { color: var(--muted); font-weight: 700; }
+
+  .mm-section { margin-top: 1.6rem; }
+  .mm-section h2 { font-size: 1.3rem; font-weight: 800; margin-bottom: .2rem; }
+  .mm-section .mm-lede { color: var(--muted); font-size: .92rem; margin-bottom: .4rem; }
+  .mm-wrap { border: 1px solid var(--hairline); border-radius: var(--radius); background: linear-gradient(180deg,#fff,var(--indigo-50)); padding: .6rem; overflow-x: auto; }
+  .mm-svg { width: 100%; height: auto; display: block; max-width: 60rem; margin: 0 auto; min-width: 34rem; }
+  .mm-link { cursor: pointer; text-decoration: none; }
+  .mm-node rect { transition: opacity .15s ease, filter .15s ease; }
+  .mm-node text { pointer-events: none; }
+  .mm-link:hover .mm-node rect { filter: brightness(1.06); }
+  .mm-edge { transition: opacity .15s ease; }
+
+  .not-this { border: 1px solid var(--hairline); border-left: 4px solid var(--clay); border-radius: var(--radius); background: #fff; padding: 1.1rem 1.3rem; margin-top: 1.2rem; }
+  .not-this h3 { font-size: .95rem; font-weight: 800; margin-bottom: .5rem; }
+</style>
+</head>
+<body>
+<header class="masthead">
+  <div class="wrap">
+    <div class="eyebrow">Learn with Phoebe · Data security</div>
+    <h1>Learn <span class="accent">Secrets &amp; Access for AI Agents</span> with Phoebe</h1>
+    <p class="sub">What you hand a model you would not hand a stranger. Six sessions for builders and platform engineers wiring an agent to tickets, a warehouse, payments and chat: give the agent its own identity, decide whose authority each call carries, scope every tool, keep keys out of the context window, gate what cannot be undone, and prove afterwards what it did. One constructed running case, a logistics company's ops agent, and one bench: a blast-radius graph searched in your browser, on real published scope names.</p>
+    <div class="stats-row">
+      <div class="stat"><b data-count="6">6</b><span>sessions</span></div>
+      <div class="stat"><b data-count="58">58</b><span>real scope names catalogued</span></div>
+      <div class="stat"><b data-count="19">19</b><span>sensitive actions reachable, day one</span></div>
+      <div class="stat"><b data-count="2">2</b><span>after the finished design</span></div>
+      <div class="stat"><b data-count="45">45</b><span>min per session</span></div>
+    </div>
+  </div>
+</header>
+<main class="wrap">
+  <section class="section">
+    <div class="paths" style="margin-top:0">
+      <h2>The six sessions 🧭 <span style="font-size:.85rem;font-weight:600;color:var(--muted)">· from one shared admin key to a plan a reviewer can sign</span></h2>
+      <p class="plede">The running case is <strong>Halyard, a constructed logistics SaaS</strong>. Its ops agent reads support tickets and customer email, queries the analytics warehouse, issues refunds up to a limit, posts to team chat and fetches the tracking pages customers paste in. On day one every tool reads one shared admin key from an environment variable. Halyard, its tools, people and weights are invented for teaching, and every page says so.</p>
+    </div>
+    <div class="course-grid">
+      <a class="course-card" href="courses/01-what-the-agent-is-holding.html" style="--diff:#34D399">
+        <span class="cicon">🗝️</span>
+        <span class="cnum">Session 1 · foundations</span>
+        <h3>What the agent is holding</h3>
+        <p>The agent as a non-human identity, the five places its key ends up, why one shared admin key ships first and what it costs, and the first blast-radius count on Halyard's day-one setup.</p>
+        <span class="meta"><span class="pill amber">▶ Start here</span></span>
+      </a>
+      <a class="course-card" href="courses/02-whose-authority.html" style="--diff:#FBBF24">
+        <span class="cicon">🪪</span>
+        <span class="cnum">Session 2 · core</span>
+        <h3>Whose authority: the agent's own, or the user's</h3>
+        <p>Service identity against acting for a person, delegated OAuth and token exchange with actor and subject, the confused deputy drawn as a mechanism, and an identity map for every Halyard tool.</p>
+        <span class="meta"><span class="pill">identity map</span></span>
+      </a>
+      <a class="course-card" href="courses/03-scope-the-tool.html" style="--diff:#FBBF24">
+        <span class="cicon">✂️</span>
+        <span class="cnum">Session 3 · core and bench</span>
+        <h3>Scope the tool, not the agent</h3>
+        <p>One credential per tool, read and write split, fine-grained scopes from the real GitHub, Slack and Google lists, expiry and audience, and the bench cut tool by tool.</p>
+        <span class="meta"><span class="pill amber">★ the bench</span></span>
+      </a>
+      <a class="course-card" href="courses/04-keep-the-key-out.html" style="--diff:#FB923C">
+        <span class="cicon">🔐</span>
+        <span class="cnum">Session 4 · deeper</span>
+        <h3>Keep the key out of the context window</h3>
+        <p>Credential brokers that attach the token at call time, short-lived dynamic secrets, redaction in traces, and MCP authorization: the server as resource server, audience-bound tokens, no passthrough.</p>
+        <span class="meta"><span class="pill">broker design</span></span>
+      </a>
+      <a class="course-card" href="courses/05-when-the-agent-must-ask.html" style="--diff:#FB923C">
+        <span class="cicon">✋</span>
+        <span class="cnum">Session 5 · deeper</span>
+        <h3>When the agent must ask first</h3>
+        <p>The lethal trifecta, approval gates for irreversible and high-value actions, and injection-resistant designs taught as a live disagreement, with approval fatigue as the counter-argument.</p>
+        <span class="meta"><span class="pill">gate rules</span></span>
+      </a>
+      <a class="course-card" href="courses/06-prove-what-it-did.html" style="--diff:#F87171">
+        <span class="cicon">🧾</span>
+        <span class="cnum">Session 6 · capstone</span>
+        <h3>Prove what it did, then sign the plan</h3>
+        <p>Attributable audit records, revocation and the kill switch, the full bench ladder from shared admin key to finished design, and Halyard's agent access plan on one page.</p>
+        <span class="meta"><span class="pill amber">🔏 signed plan</span></span>
+      </a>
+    </div>
+    <div class="diff-legend">
+      <span><i style="background:#34D399"></i>foundations</span>
+      <span><i style="background:#FBBF24"></i>core and bench</span>
+      <span><i style="background:#FB923C"></i>deeper</span>
+      <span><i style="background:#F87171"></i>capstone</span>
+    </div>
+  </section>
+  <section class="section">
+    <div class="paths" style="margin-top:0">
+      <h2>Your passport 🎫</h2>
+      <p class="plede">Clear all three quiz questions in a session and it gets stamped. Six stamps means you can inventory an agent's keys, choose whose authority each call carries, cut scopes to the job, keep keys out of the context window, place approval gates where they earn their cost, and write an audit spec a reviewer can sign. Stamps live in this browser only.</p>
+    </div>
+    <div class="pp-strip"></div>
+  </section>
+  <section class="section">
+    <div class="not-this">
+      <h3>What this is not, so you land in the right place 🧭</h3>
+      <table class="clean">
+        <tr><th>If your question is</th><th>Go here instead</th></tr>
+        <tr><td>How do I rotate warehouse passwords and run service accounts at least privilege?</td><td><a href="https://phoebefu6.github.io/learn-data-access-control-with-phoebe/courses/b6-secrets-and-keys.html">Data Access Control, secrets and keys ↗</a></td></tr>
+        <tr><td>Does prompt injection or tool abuse actually succeed against my agent, and how often?</td><td><a href="https://phoebefu6.github.io/learn-ai-red-team-with-phoebe/courses/b6-tool-abuse-and-agency.html">AI Red Team, tool abuse and agency ↗</a></td></tr>
+        <tr><td>How does the agent loop pick and call tools at all?</td><td><a href="https://phoebefu6.github.io/learn-ai-agents-with-phoebe/courses/b2-tools-first-agent.html">AI Agents, your first tools ↗</a></td></tr>
+        <tr><td>Which documents may each person see inside retrieval?</td><td><a href="https://phoebefu6.github.io/learn-ship-internal-ai-assistant-with-phoebe/courses/b5-permissions-inside-retrieval.html">Ship an Internal AI Assistant, permissions inside retrieval ↗</a></td></tr>
+        <tr><td>What do the EU AI Act, NIST AI RMF and ISO 42001 require?</td><td><a href="https://phoebefu6.github.io/learn-ai-governance-with-phoebe/">AI Governance ↗</a></td></tr>
+        <tr><td><strong>My agent holds real keys and reads text from strangers. What can it reach, with whose authority, and can I prove what it did?</strong></td><td><strong>you are in the right place</strong></td></tr>
+      </table>
+      <p style="margin-top:.7rem;font-size:.86rem;color:var(--muted)"><strong>Only the access design behind an agent's tools.</strong> Rotation mechanics, warehouse grants, attack testing, the agent loop, retrieval filters and governance frameworks are taught next door and linked from here rather than repeated.</p>
+    </div>
+  </section>
+  <section class="section">
+    <div class="paths">
+      <h2>Choose your path 🗺️</h2>
+      <p class="plede">Three doors into the same plan: the same agent, holding less.</p>
+      <div class="path"><b>🔑 We are about to give an agent production keys</b>
+        <a class="pstep" href="courses/01-what-the-agent-is-holding.html">1</a><span class="parr">→</span>
+        <a class="pstep" href="courses/03-scope-the-tool.html">3</a><span class="parr">→</span>
+        <a class="pstep" href="courses/04-keep-the-key-out.html">4</a><span class="parr">→</span>
+        <a class="pstep" href="courses/06-prove-what-it-did.html">6</a>
+        <span style="font-size:.82rem;color:var(--muted)">inventory, scopes, broker, audit</span>
+      </div>
+      <div class="path"><b>🛡️ I review agents for security</b>
+        <a class="pstep" href="courses/01-what-the-agent-is-holding.html">1</a><span class="parr">→</span>
+        <a class="pstep" href="courses/02-whose-authority.html">2</a><span class="parr">→</span>
+        <a class="pstep" href="courses/05-when-the-agent-must-ask.html">5</a><span class="parr">→</span>
+        <a class="pstep" href="courses/06-prove-what-it-did.html">6</a>
+        <span style="font-size:.82rem;color:var(--muted)">identity, authority, gates, the signed plan</span>
+      </div>
+      <div class="path"><b>🧭 The whole build</b>
+        <a class="pstep" href="courses/01-what-the-agent-is-holding.html">1</a><span class="parr">→</span>
+        <a class="pstep" href="courses/02-whose-authority.html">2</a><span class="parr">→</span>
+        <a class="pstep" href="courses/03-scope-the-tool.html">3</a><span class="parr">→</span>
+        <a class="pstep" href="courses/04-keep-the-key-out.html">4</a><span class="parr">→</span>
+        <a class="pstep" href="courses/05-when-the-agent-must-ask.html">5</a><span class="parr">→</span>
+        <a class="pstep" href="courses/06-prove-what-it-did.html">6</a>
+        <span style="font-size:.82rem;color:var(--muted)">from the credential inventory to the signed access plan</span>
+      </div>
+    </div>
+  </section>
+  <section class="section">
+    <div class="paths" style="margin-top:0">
+      <h2>What is honest here 🧾</h2>
+      <p class="plede">Agent security moves monthly and its claims travel without their sources. Each claim on these pages carries its status, and every specification revision and product page is dated 2026-11-10.</p>
+    </div>
+    <table class="clean">
+      <tr><th>Claim</th><th>Status</th></tr>
+      <tr><td>Every blast-radius number on the bench</td><td><strong>Computed</strong> by a real breadth-first search in your browser, on a constructed graph with constructed weights; a Python reference reproduces every value</td></tr>
+      <tr><td>Gmail, Slack and GitHub scope and permission names</td><td><strong>Real,</strong> as each provider publishes them, read at source 2026-11-10</td></tr>
+      <tr><td>MCP authorization rules (resource server, audience, no token passthrough)</td><td><strong>Read at source</strong> in specification revision 2026-07-28; the specification changes often, re-verify before you rely on it</td></tr>
+      <tr><td>Agent on-behalf-of authorization</td><td><strong>IETF drafts, not standards.</strong> Cited by name and date; one has expired, one has moved working group</td></tr>
+      <tr><td>Which prompt-injection defence works best</td><td><strong>Contested.</strong> Design patterns and capability systems against approval gates and approval fatigue; taught as a disagreement</td></tr>
+      <tr><td>Halyard, its tools, warehouse and payments scope names, people and weights</td><td><strong>Constructed,</strong> for teaching; no real company</td></tr>
+    </table>
+  </section>
+  <section class="section mm-section">
+    <h2>The knowledge map 🧠</h2>
+    <p class="mm-lede">The whole path at a glance - hover a session to spotlight its concepts, click any node to jump in.</p>
+    <div class="mm-wrap"><div id="mindmap"></div></div>
+  </section>
+  <footer class="pagefoot">
+    <span>learn-agent-secrets-access-with-phoebe · by Phoebe Fu &nbsp;·&nbsp; 📚 <a href="https://phoebefu6.github.io/learn-with-phoebe/">Learn with Phoebe ↗</a></span>
+    <span>Neighbours on the shelf: <a href="https://phoebefu6.github.io/learn-data-access-control-with-phoebe/">Data Access Control ↗</a> &nbsp;·&nbsp; <a href="https://phoebefu6.github.io/learn-ai-red-team-with-phoebe/">AI Red Team ↗</a> &nbsp;·&nbsp; <a href="https://phoebefu6.github.io/learn-ai-agents-with-phoebe/">AI Agents ↗</a></span>
+  </footer>
+</main>
+<script>
+window.MINDMAP_DATA = {
+ "title": "Secrets +\nAccess",
+ "centerColor": "#2C0E1B",
+ "sessions": [
+  {"label": "What it\nholds", "href": "courses/01-what-the-agent-is-holding.html", "color": "#34D399", "concepts": [
+    {"label": "Agent as an NHI", "href": "courses/01-what-the-agent-is-holding.html#part-1"},
+    {"label": "Five places a key goes", "href": "courses/01-what-the-agent-is-holding.html#part-2"},
+    {"label": "The shared admin key", "href": "courses/01-what-the-agent-is-holding.html#part-3"}]},
+  {"label": "Whose\nauthority", "href": "courses/02-whose-authority.html", "color": "#FBBF24", "concepts": [
+    {"label": "Own or on-behalf-of", "href": "courses/02-whose-authority.html#part-1"},
+    {"label": "Token exchange", "href": "courses/02-whose-authority.html#part-2"},
+    {"label": "The confused deputy", "href": "courses/02-whose-authority.html#part-3"}]},
+  {"label": "Scope\nthe tool", "href": "courses/03-scope-the-tool.html", "color": "#FBBF24", "concepts": [
+    {"label": "One key per tool", "href": "courses/03-scope-the-tool.html#part-1"},
+    {"label": "Real scope lists", "href": "courses/03-scope-the-tool.html#part-2"},
+    {"label": "Expiry and audience", "href": "courses/03-scope-the-tool.html#part-3"}]},
+  {"label": "Key out of\ncontext", "href": "courses/04-keep-the-key-out.html", "color": "#FB923C", "concepts": [
+    {"label": "The broker", "href": "courses/04-keep-the-key-out.html#part-1"},
+    {"label": "Short-lived secrets", "href": "courses/04-keep-the-key-out.html#part-2"},
+    {"label": "MCP authorization", "href": "courses/04-keep-the-key-out.html#part-3"}]},
+  {"label": "Ask\nfirst", "href": "courses/05-when-the-agent-must-ask.html", "color": "#FB923C", "concepts": [
+    {"label": "Lethal trifecta", "href": "courses/05-when-the-agent-must-ask.html#part-1"},
+    {"label": "Approval gates", "href": "courses/05-when-the-agent-must-ask.html#part-2"},
+    {"label": "Designs vs fatigue", "href": "courses/05-when-the-agent-must-ask.html#part-3"}]},
+  {"label": "Prove\nand sign", "href": "courses/06-prove-what-it-did.html", "color": "#F87171", "concepts": [
+    {"label": "Audit records", "href": "courses/06-prove-what-it-did.html#part-1"},
+    {"label": "Revoke and kill", "href": "courses/06-prove-what-it-did.html#part-2"},
+    {"label": "The full ladder", "href": "courses/06-prove-what-it-did.html#part-3"}]}
+ ]
+};
+</script>
+<script src="assets/mindmap.js?v=1"></script>
+<script src="assets/app.js?v=1"></script>
+</body>
+</html>

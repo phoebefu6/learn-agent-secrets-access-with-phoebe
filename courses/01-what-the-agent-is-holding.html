@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- social:start -->
+<meta name="description" content="Session 1 of 6. An agent is a non-human identity holding real keys. The five places an agent's key ends up, why one shared admin key is the default and what it costs, and the first blast-radius count on Halyard's day-one setup, computed in your browser.">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Learn with Phoebe">
+<meta property="og:title" content="What the agent is holding - learn secrets and access for AI agents with phoebe">
+<meta property="og:description" content="Session 1 of 6. The five places an agent's key ends up, the cost of one shared admin key, and a blast radius you can count.">
+<meta property="og:url" content="https://phoebefu6.github.io/learn-agent-secrets-access-with-phoebe/courses/01-what-the-agent-is-holding.html">
+<meta property="og:image" content="https://phoebefu6.github.io/learn-agent-secrets-access-with-phoebe/assets/og-cover.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="What the agent is holding - learn secrets and access for AI agents with phoebe">
+<meta name="twitter:description" content="Session 1 of 6. Where an agent's keys end up, and a blast radius you can count.">
+<meta name="twitter:image" content="https://phoebefu6.github.io/learn-agent-secrets-access-with-phoebe/assets/og-cover.png">
+<!-- social:end -->
+<title>Session 1 · What the agent is holding - learn secrets and access for AI agents with phoebe</title>
+<link rel="stylesheet" href="../assets/style.css?v=2">
+</head>
+<body>
+
+<div class="toolbar">
+  <div class="wrap">
+    <span class="crumb"><a href="../index.html">learn-agent-secrets-access-with-phoebe</a> / Session 1 of 6</span>
+    <button class="btn" id="toggle-all" type="button">Expand all</button>
+    <button class="btn primary" id="zoom-toggle" type="button">Projector zoom: off</button>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="wrap">
+    <div class="eyebrow">Learn Secrets &amp; Access for AI Agents with Phoebe · Session 1 of 6</div>
+    <h1>What the agent is <span class="accent">holding</span></h1>
+    <p class="sub">You gave an agent tools, and every tool needed a key. The agent now holds credentials the way a service does, but it reads text from strangers all day and decides for itself what to call next. Tonight we treat the agent as what it is, a non-human identity, follow its keys to the five places they end up, price the shared admin key almost every first build ships with, and count the blast radius of a real-shaped setup on a bench that searches the graph in your browser.</p>
+    <div class="chip-row">
+      <span class="chip level">🟢 Foundations</span>
+      <span class="chip audience">Builders and platform engineers</span>
+      <span class="chip audience">Light code, one credential inventory</span>
+      <span class="chip time">45 min</span>
+    </div>
+    <div class="agenda">
+      <span class="a1" style="flex:1">0-3 · Welcome</span>
+      <span class="a2" style="flex:4">3-18 · Identity, five places, the shared key</span>
+      <span class="a3" style="flex:5">18-40 · Build-along: inventory and first count</span>
+      <span class="a4" style="flex:1">40-45 · Q&amp;A</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section class="section" id="intro">
+    <div class="section-kicker">
+      <span class="klabel">Part 0</span>
+      <h2>Where we start</h2>
+    </div>
+    <p class="lede">The running case is a constructed Halyard example. Halyard is an invented mid-size logistics SaaS. Its platform team has shipped one internal <strong>ops agent</strong>: it reads support tickets and customer email from a shared Google Workspace inbox, queries the analytics warehouse, issues refunds up to a limit, posts to the team's Slack, and fetches the tracking pages customers paste into tickets. Each capability is a tool behind an MCP server. On day one every tool reads the same secret, <code>HALYARD_ADMIN_KEY</code>, from an environment variable. The question for all six sessions: if this agent reads one poisoned ticket tomorrow, what can it reach, with whose authority, and could you prove afterwards what it did?</p>
+
+    <div class="legend">
+      <span class="pill">🎫 Clear all three quiz questions to stamp your passport</span>
+      <span class="pill">Live = presented in the 45 minutes</span>
+      <span class="pill">Self-study = the full depth, after class</span>
+      <span class="pill">★ Build-along = do it yourself</span>
+    </div>
+
+    <div class="callout win">
+      <p><strong>★ What you walk out with tonight.</strong> A credential inventory for one agent, listing every key it can reach, where each key lives and what it opens; the five places to look for a leaked agent key; and the first page of Halyard's agent access plan, with a blast radius counted by a real graph search rather than guessed.</p>
+    </div>
+  </section>
+
+  <section class="section" id="part-1">
+    <div class="section-kicker">
+      <span class="klabel">Part 1 · covers non-human identity and the OWASP NHI Top 10</span>
+      <h2>An agent is a non-human identity with opinions</h2>
+      <span class="tag concept">5 min live</span>
+    </div>
+    <p class="lede">A cron job, a CI pipeline and a payments integration all hold keys. Security teams call them <strong>non-human identities</strong> and manage them as a class. An agent belongs to that class with one difference that changes everything: it chooses its own next call based on whatever text it just read. How the agent loop picks a tool is taught in <a href="https://phoebefu6.github.io/learn-ai-agents-with-phoebe/courses/b2-tools-first-agent.html">learn-ai-agents, your first tools</a>; here we look only at the keys behind those tools.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 350" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Halyard's day-one setup. One environment variable, HALYARD_ADMIN_KEY, feeds the ops agent. The agent calls five tools: tickets, warehouse, refunds, chat and fetch. Each tool reaches its system: the Gmail support inbox, the analytics warehouse, payments, Slack, and the open web. A dashed red line from the same key runs along the bottom to GitHub, which no tool needs, because the key also runs Halyard's other automation.">
+        <defs>
+          <filter id="k1aSk" x="-3%" y="-3%" width="106%" height="106%"><feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="2" seed="11" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="2.4" xChannelSelector="R" yChannelSelector="G"/></filter>
+          <pattern id="k1aHc" patternUnits="userSpaceOnUse" width="7" height="7" patternTransform="rotate(-38)"><line x1="0" y1="0" x2="0" y2="7" stroke="#B3832A" stroke-width="1" opacity=".55"/></pattern>
+          <marker id="k1aAr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M1 1 L9 5 L1 9" fill="none" stroke="#22141A" stroke-width="1.6" stroke-linecap="round"/></marker>
+          <marker id="k1aAd" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M1 1 L9 5 L1 9" fill="none" stroke="#991B1B" stroke-width="1.6" stroke-linecap="round"/></marker>
+        </defs>
+        <style>
+          .k1aH { font: 800 12px Inter, sans-serif; fill: #22141A; }
+          .k1aL { font: 600 12px Inter, sans-serif; fill: #22141A; }
+          .k1aS { font: 400 11px Inter, sans-serif; fill: #5E4A53; }
+          .k1aK { font: 700 11px Inter, sans-serif; fill: #5A400F; }
+          .k1aR { font: 800 11px Inter, sans-serif; fill: #991B1B; }
+          .k1aN { font: 400 12px Inter, sans-serif; fill: #5E4A53; }
+        </style>
+
+        <text class="k1aH" x="30" y="24">HALYARD ON DAY ONE: ONE KEY, FIVE TOOLS, AND A DOOR NOBODY ASKED FOR (CONSTRUCTED)</text>
+
+        <g filter="url(#k1aSk)" fill="none" stroke="#22141A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="30" y="128" width="190" height="64" rx="10" transform="rotate(-0.6 125 160)" fill="url(#k1aHc)"/>
+          <path d="M224 160 L270 160" marker-end="url(#k1aAr)"/>
+          <rect x="276" y="120" width="140" height="80" rx="12" transform="rotate(0.5 346 160)" fill="#F8EEF2"/>
+          <path d="M420 150 C440 120 444 72 472 64" marker-end="url(#k1aAr)"/>
+          <path d="M420 156 C444 140 448 118 472 114" marker-end="url(#k1aAr)"/>
+          <path d="M420 162 L472 164" marker-end="url(#k1aAr)"/>
+          <path d="M420 168 C444 182 448 208 472 214" marker-end="url(#k1aAr)"/>
+          <path d="M420 174 C440 204 444 254 472 264" marker-end="url(#k1aAr)"/>
+          <rect x="478" y="46" width="150" height="36" rx="8" fill="#FFFFFF"/>
+          <rect x="478" y="96" width="150" height="36" rx="8" fill="#FFFFFF"/>
+          <rect x="478" y="146" width="150" height="36" rx="8" fill="#FFFFFF"/>
+          <rect x="478" y="196" width="150" height="36" rx="8" fill="#FFFFFF"/>
+          <rect x="478" y="246" width="150" height="36" rx="8" fill="#FFFFFF"/>
+          <path d="M632 64 L686 64" marker-end="url(#k1aAr)"/>
+          <path d="M632 114 L686 114" marker-end="url(#k1aAr)"/>
+          <path d="M632 164 L686 164" marker-end="url(#k1aAr)"/>
+          <path d="M632 214 L686 214" marker-end="url(#k1aAr)"/>
+          <path d="M632 264 L686 264" marker-end="url(#k1aAr)"/>
+          <path d="M125 196 L125 320 L686 320" stroke="#991B1B" stroke-dasharray="6 5" marker-end="url(#k1aAd)"/>
+          <rect x="692" y="300" width="166" height="40" rx="8" fill="#FEF2F2" stroke="#991B1B"/>
+        </g>
+
+        <text class="k1aK" x="46" y="154">ENVIRONMENT VARIABLE</text>
+        <text class="k1aL" x="46" y="174">HALYARD_ADMIN_KEY</text>
+        <text class="k1aL" x="346" y="154" text-anchor="middle">ops agent</text>
+        <text class="k1aS" x="346" y="172" text-anchor="middle">picks its next call</text>
+        <text class="k1aS" x="346" y="186" text-anchor="middle">from what it read</text>
+        <text class="k1aL" x="490" y="69">tickets tool</text>
+        <text class="k1aL" x="490" y="119">warehouse tool</text>
+        <text class="k1aL" x="490" y="169">refunds tool</text>
+        <text class="k1aL" x="490" y="219">chat tool</text>
+        <text class="k1aL" x="490" y="269">fetch tool</text>
+        <text class="k1aS" x="694" y="68">Gmail support inbox</text>
+        <text class="k1aS" x="694" y="118">analytics warehouse</text>
+        <text class="k1aS" x="694" y="168">payments</text>
+        <text class="k1aS" x="694" y="218">Slack</text>
+        <text class="k1aS" x="694" y="268">any web page</text>
+        <text class="k1aR" x="704" y="324">GitHub: no tool needs it</text>
+        <text class="k1aS" x="150" y="310">the same key also runs Halyard's deploy and billing scripts</text>
+        <text class="k1aN" x="30" y="346">Every arrow is a hop a request can take. The red one is the hop you only find when you inventory the key, not the agent.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - the agent has five tools, but the key it holds has more doors than the agent has tools</figcaption>
+    </figure>
+
+    <details class="card" open>
+      <summary><span class="mode live">Live</span>Why an agent is a new kind of non-human identity<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p><strong>A service account does what its code says.</strong> If a billing script holds a payments key, you can read the script and list every call it will ever make. The key's risk is the script's behaviour plus the chance the key leaks.</p>
+        <p><strong>An agent does what its context suggests.</strong> The same payments key behind a refunds tool is now driven by a model that reads ticket text written by anyone with an email address. You can no longer list its calls by reading code; you can only bound them by what its credentials allow. That is why this subject is about the keys and not the prompt: the prompt is a request, the credential is the limit.</p>
+        <p><strong>Treat it as a workload with an owner.</strong> The agent gets its own entry in your identity inventory, with a named human owner, the same as any service. Session 2 decides whose authority each call should carry.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>The OWASP Non-Human Identities Top 10, read for an agent<span class="mini">4 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>OWASP's Non-Human Identities Top 10 (2025 list, read at source 2026-11-10) was written for service accounts, CI tokens and integrations. Every item applies to an agent, and four describe Halyard's day one exactly.</p>
+        <table class="clean">
+          <thead><tr><th>Item</th><th>What it names</th><th>Halyard day one</th></tr></thead>
+          <tbody>
+            <tr><td>NHI1 Improper Offboarding</td><td>identities left active after their job ends</td><td>no plan yet for retiring the agent</td></tr>
+            <tr><td>NHI2 Secret Leakage</td><td>keys and tokens landing in unsanctioned places</td><td><strong>yes:</strong> Part 2's five places</td></tr>
+            <tr><td>NHI3 Vulnerable Third-Party NHI</td><td>integrations that expose the credentials they hold</td><td>every MCP server you install</td></tr>
+            <tr><td>NHI4 Insecure Authentication</td><td>weak or deprecated authentication methods</td><td>a static key, no token exchange</td></tr>
+            <tr><td>NHI5 Overprivileged NHI</td><td>far more permission than the function needs</td><td><strong>yes:</strong> admin on everything</td></tr>
+            <tr><td>NHI6 Insecure Cloud Deployment Configurations</td><td>static cloud credentials, weak OIDC in CI/CD</td><td>not in scope tonight</td></tr>
+            <tr><td>NHI7 Long-Lived Secrets</td><td>distant or no expiry</td><td><strong>yes:</strong> the key never expires</td></tr>
+            <tr><td>NHI8 Environment Isolation</td><td>the same identity across test and production</td><td>the dev agent uses the same key</td></tr>
+            <tr><td>NHI9 NHI Reuse</td><td>one identity shared across several applications</td><td><strong>yes:</strong> deploy and billing scripts share it</td></tr>
+            <tr><td>NHI10 Human Use of NHI</td><td>people using machine identities by hand</td><td>engineers paste it to debug</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </details>
+
+    <div class="callout example">
+      <span class="ex-pill">Real world</span>
+      <p><strong>A payments provider now says it out loud.</strong> Stripe's restricted API keys page (read 2026-11-10) recommends restricted keys over full secret keys, and singles out AI agents as a case for them, with one restricted key per service. A restricted key starts <code>rk_</code> and grants None, Read or Write per resource; a full secret key starts <code>sk_</code> and grants everything. Halyard's refunds tool is holding the second kind.</p>
+    </div>
+  </section>
+
+  <section class="section" id="part-2">
+    <div class="section-kicker">
+      <span class="klabel">Part 2 · covers where an agent's credentials end up</span>
+      <h2>The five places an agent's key ends up</h2>
+      <span class="tag concept">6 min live</span>
+    </div>
+    <p class="lede">A service's key sits in one place and is read by code. An agent's key travels. It starts in the environment, and from there it can be copied into four more places, each with a different reader. Once a key is in the context window, the model can repeat it, and anything the model can say, an attacker who controls its input can ask it to say.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 330" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Five numbered places a key ends up. One: the environment variable, read by the tool process. Two: pasted into the system prompt, inside the context window. Three: echoed back in a tool error message, also inside the context window. Four: captured in logs and traces, drawn as a log store below and right. Five: sent to the model provider with every request, drawn as a provider box at top right. Places two and three are inside the context window, the only ones the model can read and repeat.">
+        <defs>
+          <filter id="k1bSk" x="-3%" y="-3%" width="106%" height="106%"><feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="2" seed="23" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="2.4" xChannelSelector="R" yChannelSelector="G"/></filter>
+          <pattern id="k1bHc" patternUnits="userSpaceOnUse" width="7" height="7" patternTransform="rotate(-38)"><line x1="0" y1="0" x2="0" y2="7" stroke="#991B1B" stroke-width="1" opacity=".35"/></pattern>
+          <marker id="k1bAr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M1 1 L9 5 L1 9" fill="none" stroke="#22141A" stroke-width="1.6" stroke-linecap="round"/></marker>
+        </defs>
+        <style>
+          .k1bH { font: 800 12px Inter, sans-serif; fill: #22141A; }
+          .k1bL { font: 600 12px Inter, sans-serif; fill: #22141A; }
+          .k1bS { font: 400 11px Inter, sans-serif; fill: #5E4A53; }
+          .k1bM { font: 600 11px ui-monospace, Menlo, monospace; fill: #991B1B; }
+          .k1bW { font: 800 12px Inter, sans-serif; fill: #FFFFFF; }
+          .k1bA { font: 700 11px Inter, sans-serif; fill: #2C0E1B; }
+          .k1bN { font: 400 12px Inter, sans-serif; fill: #5E4A53; }
+        </style>
+
+        <text class="k1bH" x="30" y="24">ONE KEY, FIVE PLACES, AND ONLY TWO OF THEM ARE INSIDE THE MODEL'S REACH</text>
+
+        <g filter="url(#k1bSk)" fill="none" stroke="#22141A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="30" y="56" width="180" height="56" rx="10" transform="rotate(-0.7 120 84)" fill="#FFFFFF"/>
+          <path d="M120 116 L120 168" marker-end="url(#k1bAr)"/>
+          <rect x="30" y="174" width="180" height="56" rx="10" transform="rotate(0.6 120 202)" fill="#FFFFFF"/>
+          <path d="M214 202 L262 202" marker-end="url(#k1bAr)"/>
+          <rect x="268" y="48" width="330" height="214" rx="14" transform="rotate(-0.3 433 155)" fill="#F8EEF2" stroke="#43192A"/>
+          <rect x="286" y="96" width="294" height="44" rx="6" fill="url(#k1bHc)"/>
+          <rect x="286" y="180" width="294" height="44" rx="6" fill="url(#k1bHc)"/>
+          <path d="M602 100 C630 94 640 86 664 84" marker-end="url(#k1bAr)"/>
+          <path d="M602 214 C630 220 640 228 664 232" marker-end="url(#k1bAr)"/>
+          <rect x="670" y="56" width="186" height="56" rx="10" transform="rotate(0.8 763 84)" fill="#FFFFFF"/>
+          <path d="M670 212 L856 212 L856 262 C856 272 670 272 670 262 Z" fill="#FFFFFF"/>
+          <path d="M670 212 C670 202 856 202 856 212"/>
+        </g>
+
+        <circle cx="30" cy="56" r="11" fill="#43192A"/><text class="k1bW" x="30" y="60" text-anchor="middle">1</text>
+        <circle cx="286" cy="96" r="11" fill="#43192A"/><text class="k1bW" x="286" y="100" text-anchor="middle">2</text>
+        <circle cx="286" cy="180" r="11" fill="#43192A"/><text class="k1bW" x="286" y="184" text-anchor="middle">3</text>
+        <circle cx="670" cy="212" r="11" fill="#43192A"/><text class="k1bW" x="670" y="216" text-anchor="middle">4</text>
+        <circle cx="670" cy="56" r="11" fill="#43192A"/><text class="k1bW" x="670" y="60" text-anchor="middle">5</text>
+
+        <text class="k1bL" x="48" y="82">environment variable</text>
+        <text class="k1bS" x="48" y="98">read by the tool process</text>
+        <text class="k1bL" x="48" y="200">tool process</text>
+        <text class="k1bS" x="48" y="216">calls the API with it</text>
+        <text class="k1bA" x="300" y="76">THE CONTEXT WINDOW</text>
+        <text class="k1bS" x="300" y="114">system prompt, "for debugging":</text>
+        <text class="k1bM" x="300" y="131">key: hx_live_9f2c...</text>
+        <text class="k1bS" x="300" y="198">tool result, echoed back:</text>
+        <text class="k1bM" x="300" y="215">401: bad key hx_live_9f2c...</text>
+        <text class="k1bS" x="300" y="250">the model can read and repeat both</text>
+        <text class="k1bL" x="688" y="82">model provider</text>
+        <text class="k1bS" x="688" y="98">gets the whole context</text>
+        <text class="k1bL" x="688" y="236">logs and traces</text>
+        <text class="k1bS" x="688" y="252">Authorization headers</text>
+        <text class="k1bN" x="30" y="300">1 is where the key belongs. 2 and 3 are the dangerous ones: a poisoned ticket can ask the model to put them in a reply or a URL.</text>
+        <text class="k1bN" x="30" y="318">4 and 5 are read by people and systems you did not design for. Session 4 closes all four.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - the environment is where a key belongs; the context window is where a model can be talked into repeating it</figcaption>
+    </figure>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>Places 1 to 3: environment, prompt, tool output<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p><strong>1. The environment variable.</strong> The normal home of a service key, and the default the MCP specification describes for local servers: an MCP server running over STDIO "SHOULD NOT" use the HTTP authorization flow and instead retrieves credentials from the environment (specification revision 2026-07-28, read at source). Fine, as long as nothing copies the key out of it.</p>
+        <p><strong>2. The prompt or context.</strong> Someone pastes the key into the system prompt so the model can "call the API directly", or a tool that reads config files returns one. The model now has the key as text. OWASP's LLM02:2025 Sensitive Information Disclosure lists security credentials among the sensitive information a model can disclose.</p>
+        <p><strong>3. Tool output echoed back.</strong> The quiet one. A tool fails and returns its own error, and the error contains the connection string or the key prefix it tried. Tool results go straight into the context, so a key the agent was never meant to see is now in it.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>Places 4 and 5: traces, and the provider's side<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p><strong>4. Logs and traces.</strong> Agent observability tools record every tool call with its arguments, and an HTTP client logged at debug level records headers. A bearer token in an <code>Authorization</code> header is now in a log store that the whole on-call rotation can search.</p>
+        <p><strong>5. The model provider's side.</strong> Everything in the context window is sent to the model provider on every turn. What happens to it there is set by your contract and the provider's data policy, which you should read for retention and review terms. A key that reached place 2 or 3 has also reached place 5.</p>
+        <p>The fixes are session 4's subject: a broker that attaches the key at call time so it never enters the context, redaction before anything is traced, and short-lived keys so a copy that does leak expires.</p>
+      </div>
+    </details>
+
+    <div class="callout tip">
+      <p><strong>Search for the key, not the agent.</strong> Take a key's first eight characters and search your trace store, your agent transcripts and your tool error logs for them. Every hit is a place the key went that your design did not mean it to.</p>
+    </div>
+  </section>
+
+  <section class="section" id="part-3">
+    <div class="section-kicker">
+      <span class="klabel">Part 3 · covers why one shared admin key is the default</span>
+      <h2>Why the shared admin key ships first, and what it costs</h2>
+      <span class="tag concept">4 min live</span>
+    </div>
+    <p class="lede">Nobody designs a shared admin key. It is what you have when the demo has to work by Friday: one secret, already in the vault, already trusted by every system. It is the right call for a prototype and the wrong one for anything that reads text from customers, for three reasons you can draw.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Two panels. Left, revoke it: the shared key at the centre with six consumers around it, the ops agent, deploy script, billing script, nightly report, a developer's laptop and the dev agent; a red cross on the key means all six stop together. Right, read the log: three audit lines, a refund, a channel post and a table export, all recorded as HALYARD_ADMIN_KEY, with the actor column showing a question mark on every line.">
+        <defs>
+          <filter id="k1cSk" x="-3%" y="-3%" width="106%" height="106%"><feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="2" seed="37" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="2.4" xChannelSelector="R" yChannelSelector="G"/></filter>
+        </defs>
+        <style>
+          .k1cH { font: 800 12px Inter, sans-serif; fill: #22141A; }
+          .k1cL { font: 600 12px Inter, sans-serif; fill: #22141A; }
+          .k1cS { font: 400 11px Inter, sans-serif; fill: #5E4A53; }
+          .k1cM { font: 500 11px ui-monospace, Menlo, monospace; fill: #22141A; }
+          .k1cR { font: 800 12px Inter, sans-serif; fill: #991B1B; }
+          .k1cA { font: 700 11px Inter, sans-serif; fill: #2C0E1B; }
+          .k1cN { font: 400 12px Inter, sans-serif; fill: #5E4A53; }
+        </style>
+
+        <text class="k1cH" x="30" y="24">ONE KEY, SHARED: YOU CANNOT REVOKE IT ALONE, AND THE LOG CANNOT SAY WHO</text>
+
+        <g filter="url(#k1cSk)" fill="none" stroke="#22141A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="30" y="40" width="390" height="220" rx="12" transform="rotate(-0.3 225 150)" fill="#FFFFFF"/>
+          <rect x="450" y="40" width="400" height="220" rx="12" transform="rotate(0.3 650 150)" fill="#FFFFFF"/>
+          <rect x="170" y="128" width="110" height="40" rx="8" fill="#FBF3E1" stroke="#B3832A"/>
+          <path d="M170 140 L118 96 M170 148 L118 148 M170 156 L118 202 M280 140 L330 96 M280 148 L330 148 M280 156 L330 202"/>
+          <path data-strike="1" d="M150 116 L300 180 M300 116 L150 180" stroke="#991B1B" stroke-width="3"/>
+          <path d="M470 128 L830 128 M470 166 L830 166 M470 204 L830 204"/>
+        </g>
+
+        <text class="k1cA" x="46" y="62">REVOKE IT</text>
+        <rect x="186" y="138" width="78" height="20" rx="4" fill="#FBF3E1"/>
+        <text class="k1cL" x="225" y="152" text-anchor="middle">admin key</text>
+        <text class="k1cS" x="112" y="92" text-anchor="end">ops agent</text>
+        <text class="k1cS" x="112" y="152" text-anchor="end">deploy script</text>
+        <text class="k1cS" x="112" y="206" text-anchor="end">billing script</text>
+        <text class="k1cS" x="336" y="92">nightly report</text>
+        <text class="k1cS" x="336" y="152">a laptop</text>
+        <text class="k1cS" x="336" y="206">dev agent</text>
+        <text class="k1cR" x="46" y="246">one leak, six outages</text>
+
+        <text class="k1cA" x="466" y="62">READ THE LOG</text>
+        <text class="k1cS" x="470" y="96">credential</text>
+        <text class="k1cS" x="640" y="96">action</text>
+        <text class="k1cS" x="790" y="96">who?</text>
+        <text class="k1cM" x="470" y="120">HALYARD_ADMIN_KEY</text>
+        <text class="k1cM" x="640" y="120">refund 180 USD</text>
+        <text class="k1cR" x="800" y="120">?</text>
+        <text class="k1cM" x="470" y="158">HALYARD_ADMIN_KEY</text>
+        <text class="k1cM" x="640" y="158">post #finance</text>
+        <text class="k1cR" x="800" y="158">?</text>
+        <text class="k1cM" x="470" y="196">HALYARD_ADMIN_KEY</text>
+        <text class="k1cM" x="640" y="196">export table</text>
+        <text class="k1cR" x="800" y="196">?</text>
+        <text class="k1cR" x="466" y="246">every line looks the same</text>
+
+        <text class="k1cN" x="30" y="288">The third cost is the blast radius itself, and that one you can count: it is the build-along.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - a shared key fails three ways at once: it cannot be revoked alone, it cannot be attributed, and it opens everything</figcaption>
+    </figure>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>The three costs of one shared key<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p><strong>You cannot revoke it alone.</strong> When the agent's key leaks you want to kill the agent's access in seconds. If the deploy script and the billing job hold the same key, revoking it is an outage across all of them, so in practice nobody revokes it. OWASP calls this NHI9, reuse.</p>
+        <p><strong>You cannot attribute it.</strong> Every action is logged under the same credential. When a refund goes wrong, the log says the key did it, and the key belongs to everyone. Session 6 builds the audit record that fixes this.</p>
+        <p><strong>It opens everything.</strong> The key can do whatever its most powerful consumer needed, so a poisoned ticket can steer the agent to any of it, and if the key itself leaks, the attacker gets the rest with no agent and no gate in the way. That is the number the build-along counts.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>Rotation is a different problem, taught next door<span class="mini">2 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>How to rotate a warehouse password, issue short-lived credentials to machines and run service accounts at least privilege is covered in <a href="https://phoebefu6.github.io/learn-data-access-control-with-phoebe/courses/b6-secrets-and-keys.html">learn-data-access-control, secrets and keys</a>, and the estate-wide view of human and service credential paths in <a href="https://phoebefu6.github.io/learn-cyber-security-with-phoebe/courses/b2-credential-paths.html">learn-cyber-security, credential paths</a>. Here we keep to what is specific to agents: keys reachable from a model's context, tool output and traces, and actions a model chooses on its own.</p>
+      </div>
+    </details>
+  </section>
+
+  <section class="section" id="demo-1">
+    <div class="section-kicker">
+      <span class="klabel">Build-along</span>
+      <h2>Inventory Halyard's keys, then count the blast radius</h2>
+      <span class="tag demo">★ 22 min · everyone builds</span>
+    </div>
+    <p class="lede">First on paper, then on the bench. Write the inventory for Halyard's (constructed) ops agent with the steps below; if you have your own agent, inventory that too and keep Halyard as the worked answer. Then load the day-one setup on the bench and read what a graph search says a poisoned ticket can reach.</p>
+
+    <div class="steps">
+      <div class="step">
+        <p><strong>List every key the agent can reach.</strong> Not just the ones the agent "uses": every credential readable from its process, its config and its tools. For each, write where it lives and who else holds it.</p>
+        <div class="prompt-box good"><span class="label">★ Step 1 · credential inventory, page 1 of the access plan</span>credential          lives in          also used by
+HALYARD_ADMIN_KEY   env var           deploy script, billing job,
+                                      nightly report, dev agent,
+                                      two engineers' laptops
+(no other keys: every tool reads the same one)</div>
+      </div>
+      <div class="step">
+        <p><strong>Write what the key opens, per system.</strong> Look up the admin scope on each provider. This is the part teams skip, and it is where GitHub turns up.</p>
+        <div class="prompt-box good"><span class="label">★ Step 2 · what HALYARD_ADMIN_KEY opens</span>Gmail       https://mail.google.com/   full mail, incl. permanent delete
+Slack       admin, chat:write.public,  workspace admin, any channel
+            users:read.email
+warehouse   wh.admin                   export, drop (constructed role)
+payments    payouts:admin              refunds of any size, payout
+                                       bank account (constructed)
+GitHub      Contents, Secrets,         push, overwrite CI secrets,
+            Administration: write      delete a repository</div>
+      </div>
+      <div class="step">
+        <p><strong>Mark the five places.</strong> For the key, write yes, no or unknown for each place from Part 2. "Unknown" counts as yes until you have searched.</p>
+        <div class="prompt-box good"><span class="label">★ Step 3 · where the key has been</span>1 env var            yes
+2 prompt or context  unknown (search transcripts for hx_live_)
+3 tool output        YES: the warehouse tool's 401 error prints it
+4 logs and traces    YES: debug tracing records headers
+5 provider side      yes, wherever 2 or 3 is yes</div>
+      </div>
+      <div class="step">
+        <p><strong>Run the bench on day one.</strong> The bench below starts on rung 0, one shared admin key. Read the headline, the weighted blast radius and the shortest injected path. Then switch Credentials to "One per tool" and watch which actions drop out, and which do not.</p>
+      </div>
+    </div>
+
+    <div class="asa-bench" data-preset="r0" data-title="Halyard blast-radius bench: day one"></div>
+
+    <div class="steps">
+      <div class="step">
+        <p><strong>Write the baseline into the plan.</strong> Copy the numbers the bench prints, not your guess. On the day-one setup it prints <strong>19 of 19 sensitive actions</strong> reachable from untrusted input with no human in the way, a <strong>weighted blast radius of 121</strong>, and a shortest injected path of three hops: ticket body, ops agent, refunds tool, change the payout bank account. A stolen copy of the key reaches 18 of them directly, including four GitHub actions no tool exposes.</p>
+        <div class="prompt-box good"><span class="label">★ Step 5 · baseline, top of the access plan</span>Day one (bench rung 0): 19 of 19 sensitive actions reachable
+from a poisoned ticket, email or web page, no gate.
+Weighted blast radius 121 (constructed weights).
+Worst path: ticket -&gt; agent -&gt; refunds tool -&gt; payout bank
+account, 3 hops. A stolen key alone reaches 18, incl. GitHub.
+Target for session 6: show the number falling, rung by rung.</div>
+      </div>
+    </div>
+
+    <div class="callout tip">
+      <p><strong>The one-per-tool switch is a trap worth falling into.</strong> On the bench it takes the headline from 19 to 15 and removes GitHub entirely, which feels like progress. But each tool still holds its provider's broadest key, so the agent can still change the payout bank account in three hops. Separate keys are the precondition for cutting scopes, which is session 3.</p>
+    </div>
+  </section>
+
+  <section class="section" id="exercise">
+    <div class="section-kicker">
+      <span class="klabel">Homework</span>
+      <h2>Before session 2</h2>
+      <span class="tag exercise">30 min</span>
+    </div>
+    <ol>
+      <li><strong>Inventory your own agent.</strong> Every credential its process, config and tools can read, where each lives, and who else holds it.</li>
+      <li><strong>Search for one key.</strong> Take the first eight characters of one agent key and search your traces, transcripts and error logs. Write down every place it appears.</li>
+      <li><strong>Find your GitHub.</strong> For each key, list one thing it opens that the agent never needs. That list is your free blast-radius reduction.</li>
+      <li><strong>Mark each tool call by trigger.</strong> For each tool, write whether the agent calls it on its own (a queue, a schedule) or because a named person asked. Session 2 needs this.</li>
+    </ol>
+  </section>
+
+  <section class="section" id="quiz">
+    <div class="section-kicker">
+      <span class="klabel">Check yourself</span>
+      <h2>Three questions</h2>
+    </div>
+    <p>Clear all three and session 1 gets stamped in your passport.</p>
+
+    <div class="quiz-q" data-answer="1">
+      <p class="qtext">1 · On Halyard's day-one setup, which of these can the shared key reach even though no tool of the agent exposes it?</p>
+      <button class="qopt" type="button">A · Permanently deleting mail in the support inbox</button>
+      <button class="qopt" type="button">B · Deleting a GitHub repository, because the same key runs Halyard's other automation</button>
+      <button class="qopt" type="button">C · Fetching any URL</button>
+      <button class="qopt" type="button">D · Querying shipment aggregates in the warehouse</button>
+      <p class="qwhy">A, C and D are all reachable through the agent's own tools. GitHub is reachable only because the key is shared with the deploy scripts: an attacker who gets a copy of the key can call GitHub directly. You find that door by inventorying the key, not the agent.</p>
+    </div>
+
+    <div class="quiz-q" data-answer="2">
+      <p class="qtext">2 · The warehouse tool fails and returns "401: bad key hx_live_9f2c...". Why is this worse than the key sitting in the environment variable?</p>
+      <button class="qopt" type="button">A · It is not worse; the key was already on the same machine</button>
+      <button class="qopt" type="button">B · Because a 401 means the key has already been revoked</button>
+      <button class="qopt" type="button">C · Because tool output goes into the context window, where the model can be asked to repeat it into a reply or a URL, and it travels to the provider and the traces too</button>
+      <button class="qopt" type="button">D · Because error messages are shown to the customer automatically</button>
+      <p class="qwhy">In the environment the key is read by code. In the context it is text the model can say, and a poisoned ticket can ask it to say it somewhere useful to the attacker. It also reaches places 4 and 5. B and D are not true in general.</p>
+    </div>
+
+    <div class="quiz-q" data-answer="0">
+      <p class="qtext">3 · On the day-one setup, what does the bench report as the shortest injected path to the heaviest action a poisoned ticket can reach?</p>
+      <button class="qopt" type="button">A · Ticket body, ops agent, refunds tool, change the payout bank account: three hops</button>
+      <button class="qopt" type="button">B · Ticket body, ops agent, chat tool, administer the workspace: three hops</button>
+      <button class="qopt" type="button">C · There is no path, because the agent never reads ticket bodies as instructions</button>
+      <button class="qopt" type="button">D · Ticket body, ops agent, fetch tool, GitHub: two hops</button>
+      <p class="qwhy">The payout bank account carries the highest constructed weight (10) among actions the agent's own tools can reach, and the refunds tool holds the shared key, so three hops get there. C is the hope that prompt injection does not happen; the bench assumes it does. GitHub is reached only by a stolen key, a longer path.</p>
+    </div>
+
+    <p class="quiz-score"></p>
+  </section>
+
+  <section class="section" id="official">
+    <div class="section-kicker">
+      <span class="klabel">Sources covered</span>
+      <h2>What this session teaches, and where it came from</h2>
+    </div>
+    <div class="covered">
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">OWASP Non-Human Identities Top 10, 2025 (read 2026-11-10)</span><span class="note">All ten items by name and meaning, mapped to Halyard</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">OWASP Top 10 for LLM Applications 2025 (read 2026-11-10)</span><span class="note">LLM02 lists security credentials as sensitive information; LLM06 Excessive Agency is session 3</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">MCP specification, authorization, revision 2026-07-28 (read 2026-11-10)</span><span class="note">STDIO servers take credentials from the environment rather than the HTTP flow</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Stripe restricted API keys (read 2026-11-10)</span><span class="note">rk_ against sk_ keys, None, Read or Write per resource, the recommendation for agents</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Gmail, Slack and GitHub scope references (read 2026-11-10)</span><span class="note">The admin scope names in step 2 are real; the warehouse and payments names are constructed</span></div>
+      <div class="covered-row"><span class="status pill light">◐</span><span class="name">The five places a key ends up</span><span class="note">A teaching taxonomy built on the sources above, not a published list</span></div>
+      <div class="covered-row"><span class="status pill light">◐</span><span class="name">Bench numbers (19, 121, 18, three hops)</span><span class="note">Computed by a graph search in your browser on a constructed graph with constructed weights</span></div>
+      <div class="covered-row"><span class="status pill light">◐</span><span class="name">Halyard, its tools, key, scripts and people</span><span class="note">Constructed for teaching; no real company</span></div>
+    </div>
+    <p class="mono" style="margin-top:14px">Every fact on this page, and its verification tier, is recorded in the course's source map.</p>
+  </section>
+
+  <section class="cheat" id="cheatsheet">
+    <h3>Session 1 cheat sheet <span>· pin this</span></h3>
+    <div class="grid-2">
+      <div class="cheat-item"><b>An agent is an NHI</b><span>A workload with keys and an owner, that picks its next call from text it read.</span></div>
+      <div class="cheat-item"><b>The credential is the limit</b><span>The prompt is a request. What the key allows is what can happen.</span></div>
+      <div class="cheat-item"><b>Five places</b><span>Env var, prompt or context, tool output, logs and traces, the provider's side.</span></div>
+      <div class="cheat-item"><b>Context is the danger zone</b><span>A key in the context window is text the model can be talked into repeating.</span></div>
+      <div class="cheat-item"><b>Shared key, three costs</b><span>Cannot revoke alone, cannot attribute, opens everything.</span></div>
+      <div class="cheat-item"><b>Halyard day one</b><span>Bench rung 0: 19 of 19 sensitive actions, weighted 121, three hops to the payout account.</span></div>
+    </div>
+  </section>
+
+  <div class="callout next">
+    <span class="nx-pill">Next session</span>
+    <p>Before cutting anything, decide whose authority each call should carry. Session 2 separates the agent acting as itself from the agent acting for a person, draws token exchange and the confused deputy as mechanisms, and maps each Halyard tool to one identity model.</p>
+  </div>
+
+  <footer class="pagefoot">
+    <span>Session 1 of 6 · learn-agent-secrets-access-with-phoebe · by Phoebe Fu &nbsp;·&nbsp; 📚 <a href="https://phoebefu6.github.io/learn-with-phoebe/">Learn with Phoebe ↗</a></span>
+    <span><a href="../index.html">← Course home</a> &nbsp;·&nbsp; <a href="02-whose-authority.html">Next: Whose authority →</a></span>
+  </footer>
+
+</main>
+
+<script src="../assets/app.js?v=1"></script>
+<script src="../assets/asa-sample.js?v=1"></script>
+<script src="../assets/asa-live.js?v=3"></script>
+</body>
+</html>
